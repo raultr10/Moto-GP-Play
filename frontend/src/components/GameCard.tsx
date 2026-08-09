@@ -1,14 +1,15 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View, Image, ImageSourcePropType } from 'react-native';
 
 interface GameCardProps {
   title: string;
   description: string;
+  image: ImageSourcePropType;
   onPress: () => void;
   disabled?: boolean;
 }
 
-export const GameCard = ({ title, description, onPress, disabled = false }: GameCardProps) => {
+export const GameCard = ({ title, description, image, onPress, disabled = false }: GameCardProps) => {
   return (
     <TouchableOpacity
       style={[styles.card, disabled && styles.cardDisabled]}
@@ -16,6 +17,8 @@ export const GameCard = ({ title, description, onPress, disabled = false }: Game
       disabled={disabled}
       activeOpacity={0.7}
     >
+      <Image source={image} style={[styles.cardImage, disabled && styles.imageDisabled]} resizeMode="cover" />
+
       <View style={styles.content}>
         <Text style={[styles.title, disabled && styles.textDisabled]}>{title}</Text>
         {disabled ? (
@@ -38,7 +41,6 @@ const styles = StyleSheet.create({
     height: 220,
     marginHorizontal: 8,
     marginBottom: 16,
-    padding: 16,
     borderWidth: 1,
     borderColor: '#3F3F4E',
     shadowColor: '#000',
@@ -46,16 +48,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
+    overflow: 'hidden',
   },
   cardDisabled: {
     backgroundColor: '#1E1E26',
     borderColor: '#2A2A35',
     opacity: 0.8,
   },
+  cardImage: {
+    width: '100%',
+    height: 120,
+  },
+  imageDisabled: {
+    opacity: 0.3,
+  },
   content: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
+    padding: 16,
   },
   title: {
     fontSize: 18,

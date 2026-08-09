@@ -11,24 +11,28 @@ export const HomeScreen = ({ navigation }: any) => {
         <GameCard
           title="Moto Wordle"
           description="Adivina el piloto."
+          image={require('../../assets/Wordle.png')}
           onPress={() => navigation.navigate('Wordle')}
         />
         
         <GameCard
           title="Moto Grid"
           description="Rellena la matriz."
+          image={require('../../assets/Grid.png')}
           onPress={() => navigation.navigate('Grid')}
         />
         
         <GameCard
           title="Moto Connections"
           description="Empareja los pilotos."
+          image={require('../../assets/Connections.png')}
           onPress={() => navigation.navigate('Connections')}
         />
         
         <GameCard
           title="Top 10"
           description="Adivina el top 10."
+          image={require('../../assets/Top10.png')}
           onPress={() => navigation.navigate('Top10')}
         />
       </View>
