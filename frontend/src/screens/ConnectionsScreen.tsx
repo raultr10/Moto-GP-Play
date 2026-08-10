@@ -125,6 +125,7 @@ export default function ConnectionsScreen() {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>MOTO CONNECTIONS</Text>
 
