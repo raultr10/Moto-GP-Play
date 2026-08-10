@@ -25,16 +25,24 @@ wordleRoute.get('/random', async (c) => {
 
       let targetWord = null;
 
-      //Prioridad 1: El apellido (entre 3 y 7 letras)
-      if (lastName.length >= 3 && lastName.length <= 7) {
-        targetWord = lastName;
-      } 
-      //Prioridad 2: El nombre (entre 3 y 7 letras)
-      else if (firstName.length >= 3 && firstName.length <= 7) {
-        targetWord = firstName;
+      //ES UN NOMBRE COMPUESTO (ej: Fabio Di Giannantonio, Randy de Puniet)
+      if (nameParts.length > 2) {
+        //Usamos directamente el primer nombre
+        if (firstName.length >= 3 && firstName.length <= 7) {
+          targetWord = firstName;
+        }
+      } else {
+        //Prioridad 1: El apellido (entre 3 y 7 letras)
+        if (lastName.length >= 3 && lastName.length <= 7) {
+          targetWord = lastName;
+        } 
+        //Prioridad 2: El nombre (entre 3 y 7 letras)
+        else if (firstName.length >= 3 && firstName.length <= 7) {
+          targetWord = firstName;
+        }
       }
 
-      //Si cumple alguna de las dos, entra a la bolsa de pilotos jugables
+      //Si cumple la regla, entra a la bolsa de pilotos jugables
       if (targetWord) {
         validRiders.push({
           ...rider,
