@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A35',
     borderRadius: 16,
     width: 160,
-    height: 220,
+    height: 250,
     marginHorizontal: 8,
     marginBottom: 16,
     borderWidth: 1,
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
-    overflow: 'hidden',
+    padding: 12,
   },
   cardDisabled: {
     backgroundColor: '#1E1E26',
@@ -57,7 +57,8 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 120,
+    height: 136,
+    borderRadius: 8,
   },
   imageDisabled: {
     opacity: 0.3,
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 16,
+    paddingBottom: 4,
   },
   title: {
     fontSize: 18,
