@@ -123,8 +123,35 @@ export const WordleScreen = () => {
     return colors;
   };
 
+  //Función para darle color a las teclas del teclado de la pantalla
+  const getKeyboardColors = () => {
+    const keyColors: Record<string, string> = {};
+
+    for (let i = 0; i < turn; i++) {
+      const guess = guesses[i];
+      const colors = getGuessColors(guess);
+
+      for (let j = 0; j < guess.length; j++) {
+        const letter = guess[j];
+        const color = colors[j];
+
+        if (color === 'correct') {
+          keyColors[letter] = 'correct';
+        } else if (color === 'present' && keyColors[letter] !== 'correct') {
+          keyColors[letter] = 'present';
+        } else if (color === 'absent' && keyColors[letter] !== 'correct' && keyColors[letter] !== 'present') {
+          keyColors[letter] = 'absent';
+        }
+      }
+    }
+    return keyColors;
+  };
+
   if (loading) return <View style={[styles.container, styles.center]}><ActivityIndicator size="large" color="#E10600" /></View>;
   if (error) return <View style={[styles.container, styles.center]}><Text style={styles.errorText}>{error}</Text></View>;
+
+  //Guardamos la función que le da color a las teclas
+  const keyboardColors = getKeyboardColors();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -177,18 +204,31 @@ export const WordleScreen = () => {
       <View style={styles.keyboard}>
         {KEYBOARD_ROWS.map((row, i) => (
           <View key={i} style={styles.keyRow}>
-            {row.map(key => (
-              <TouchableOpacity
-                key={key}
-                style={[
-                  styles.key,
-                  (key === 'ENTER' || key === 'DEL') && styles.keySpecial
-                ]}
-                onPress={() => handleKeyPress(key)}
-              >
-                <Text style={styles.keyText}>{key}</Text>
-              </TouchableOpacity>
-            ))}
+            {row.map(key => {
+              let extraKeyStyle = null;
+              if (key !== 'ENTER' && key !== 'DEL') {
+                //Le damos el color dependiendo del estado en el que estén
+                const status = keyboardColors[key];
+                if (status === 'correct') extraKeyStyle = styles.keyCorrect;
+                else if (status === 'present') extraKeyStyle = styles.keyPresent;
+                else if (status === 'absent') extraKeyStyle = styles.keyAbsent;
+              }
+
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.key,
+                    //Le damos un estado especial a las teclas DEL y ENTER
+                    (key === 'ENTER' || key === 'DEL') && styles.keySpecial,
+                    extraKeyStyle
+                  ]}
+                  onPress={() => handleKeyPress(key)}
+                >
+                  <Text style={styles.keyText}>{key}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         ))}
       </View>
@@ -253,4 +293,7 @@ const styles = StyleSheet.create({
   },
   keySpecial: { minWidth: 60, backgroundColor: '#606263' },
   keyText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+  keyCorrect: { backgroundColor: '#538d4e' },
+  keyPresent: { backgroundColor: '#b59f3b' },
+  keyAbsent: { backgroundColor: '#3a3a3c' },
 });
