@@ -254,10 +254,18 @@ gridRoute.post('/giveup', async (c) => {
         
         //Para que rellene solo las casillas que están vacías
         if (finalBoard[index] === null) {
-          const validRiders = ridersReady.filter(rider => {
+          let validRiders = ridersReady.filter(rider => {
             if (usedIds.has(rider.id)) return false; 
             return checkMatch(rider, cols[c], rider.teamNames) && checkMatch(rider, rows[r], rider.teamNames);
           });
+
+          //Salvavidas por si ha habido un error y se agotan las opciones de pilotos
+          //Mejor que salga uno repetido a una casilla vacía
+          if (validRiders.length === 0) {
+            validRiders = ridersReady.filter(rider => {
+              return checkMatch(rider, cols[c], rider.teamNames) && checkMatch(rider, rows[r], rider.teamNames);
+            });
+          }
 
           if (validRiders.length > 0) {
             const solutionRider = validRiders[0];
