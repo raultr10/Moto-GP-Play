@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { GridCell } from '../components/GridCell';
 import GameControls from '../components/GameControls'; 
+import { CustomHeader } from '../components/CustomHeader';
 
 interface AnswerData {
   id: number | string;
@@ -199,7 +200,9 @@ export const GridScreen = () => {
   }
 
   return (
-    <ScrollView
+    <View style={styles.mainWrapper}>
+      <CustomHeader />
+      <ScrollView
       style={styles.container}
       contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
       keyboardShouldPersistTaps="handled"
@@ -280,6 +283,7 @@ export const GridScreen = () => {
       </View>
 
     </ScrollView>
+    </View>
   );
 };
 
@@ -365,5 +369,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 15,
     fontStyle: 'italic',
+  },
+  mainWrapper: {
+    flex: 1,
+    backgroundColor: '#15151A',
   },
 });

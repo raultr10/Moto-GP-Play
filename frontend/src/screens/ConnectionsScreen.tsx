@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Alert, ScrollView, Platform, TouchableOpacity, 
 import PilotCard from '../components/PilotCard';
 import SolvedCategory from '../components/SolvedCategory';
 import GameControls from '../components/GameControls';
+import { CustomHeader } from '../components/CustomHeader';
 
 interface Pilot {
   id: string;
@@ -22,18 +23,18 @@ export default function ConnectionsScreen() {
   const [categoriesInfo, setCategoriesInfo] = useState<Record<string, CategoryInfo>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [solvedCategories, setSolvedCategories] = useState<string[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchNewGame = async () => {
     setIsLoading(true);
     setSelectedIds([]);
     setSolvedCategories([]);
-    
+
     try {
       const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/daily/connections/random`);
       const data = await response.json();
-      
+
       if (data.error) {
         showCustomAlert('Error del servidor', data.error);
         return;
@@ -80,7 +81,7 @@ export default function ConnectionsScreen() {
     }
 
     const selectedPilots = allPilots.filter(p => selectedIds.includes(p.id));
-    
+
     //Contamos cuántos pilotos hay de cada categoría entre los 4 elegidos
     const categoryCounts: Record<string, number> = {};
     selectedPilots.forEach(p => {
@@ -96,16 +97,16 @@ export default function ConnectionsScreen() {
       setSolvedCategories([...solvedCategories, winningCategory]);
       setSelectedIds([]);
       setGridItems(gridItems.filter(item => item.category !== winningCategory));
-      
+
       //Si son 3 avisamos al usuario
     } else if (maxMatches === 3) {
       showCustomAlert('¡Casi!', '3 pilotos están bien. ¡Te falta uno para completar el grupo!');
-      
+
     } else {
       showCustomAlert('¡Fallo!', 'Esos pilotos no forman un grupo correcto. Prueba otra combinación.');
     }
   };
-  
+
   const handleClear = () => {
     setSelectedIds([]);
   };
@@ -118,73 +119,77 @@ export default function ConnectionsScreen() {
   };
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.title}>MOTO CONNECTIONS</Text>
+    <View style={styles.container}>
+      <CustomHeader />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>MOTO CONNECTIONS</Text>
 
-      {/*Botón para pedir un tablero nuevo al servidor*/}
-      <TouchableOpacity style={styles.btnRandom} onPress={fetchNewGame} disabled={isLoading}>
-        <Text style={styles.btnRandomText}>
-          {isLoading ? 'Cargando...' : '🔄 Nuevo Connections Aleatorio'}
-        </Text>
-      </TouchableOpacity>
+        {/*Botón para pedir un tablero nuevo al servidor*/}
+        <TouchableOpacity style={styles.btnRandom} onPress={fetchNewGame} disabled={isLoading}>
+          <Text style={styles.btnRandomText}>
+            {isLoading ? 'Cargando...' : '🔄 Nuevo Connections Aleatorio'}
+          </Text>
+        </TouchableOpacity>
 
-      {/* Si está cargando, mostramos la ruleta. Si no, mostramos el tablero */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E91E63" />
-        </View>
-      ) : (
-        <View style={[styles.boardWrapper, styles.boardWrapperFlex]}>
-          
-          {/* BLOQUE DE CATEGORÍAS RESUELTAS */}
-          <View style={styles.solvedContainer}>
-            {solvedCategories.map((category) => {
-              const info = categoriesInfo[category];
-              // Buscamos en allPilots para que no se pierdan los nombres al resolver
-              const pilotsText = allPilots.filter(p => p.category === category).map(p => p.name).join(', ');
-              
-              return (
-                <SolvedCategory 
-                  key={category} 
-                  title={category} 
-                  pilotsText={pilotsText} 
-                  color={info?.color || '#555'} 
+        {/* Si está cargando, mostramos la ruleta. Si no, mostramos el tablero */}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#E91E63" />
+          </View>
+        ) : (
+          <View style={[styles.boardWrapper, styles.boardWrapperFlex]}>
+
+            {/* BLOQUE DE CATEGORÍAS RESUELTAS */}
+            <View style={styles.solvedContainer}>
+              {solvedCategories.map((category) => {
+                const info = categoriesInfo[category];
+                // Buscamos en allPilots para que no se pierdan los nombres al resolver
+                const pilotsText = allPilots.filter(p => p.category === category).map(p => p.name).join(', ');
+
+                return (
+                  <SolvedCategory
+                    key={category}
+                    title={category}
+                    pilotsText={pilotsText}
+                    color={info?.color || '#555'}
+                  />
+                );
+              })}
+            </View>
+
+            {/* GRID DE PILOTOS RESTANTES */}
+            <View style={styles.gridContainer}>
+              {gridItems.map((item) => (
+                <PilotCard
+                  key={item.id}
+                  name={item.name}
+                  imageUrl={item.imageUrl}
+                  isSelected={selectedIds.includes(item.id)}
+                  onPress={() => toggleSelection(item.id)}
                 />
-              );
-            })}
+              ))}
+            </View>
+
           </View>
+        )}
 
-          {/* GRID DE PILOTOS RESTANTES */}
-          <View style={styles.gridContainer}>
-            {gridItems.map((item) => (
-              <PilotCard 
-                key={item.id}
-                name={item.name}
-                imageUrl={item.imageUrl}
-                isSelected={selectedIds.includes(item.id)}
-                onPress={() => toggleSelection(item.id)}
-              />
-            ))}
+        {/* CONTROLES INFERIORES */}
+        {!isLoading && (
+          <View style={styles.controlsWrapper}>
+            <GameControls
+              onSubmit={handleSubmit}
+              onClear={handleClear}
+              onGiveUp={handleGiveUp}
+            />
           </View>
+        )}
+      </ScrollView>
+    </View>
 
-        </View>
-      )}
-
-      {/* CONTROLES INFERIORES */}
-      {!isLoading && (
-        <View style={styles.controlsWrapper}>
-          <GameControls 
-            onSubmit={handleSubmit}
-            onClear={handleClear}
-            onGiveUp={handleGiveUp}
-          />
-        </View>
-      )}
-    </ScrollView>
   );
 }
 
@@ -197,7 +202,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     paddingTop: 50,
-    alignItems: 'center', 
+    alignItems: 'center',
   },
   title: {
     color: '#FFF',
@@ -206,7 +211,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  
+
   btnRandom: {
     backgroundColor: '#2A2A35',
     paddingVertical: 10,
@@ -229,14 +234,14 @@ const styles = StyleSheet.create({
   },
   boardWrapper: {
     width: '100%',
-    maxWidth: 500, 
+    maxWidth: 500,
   },
   boardWrapperFlex: {
-    flex: 1, 
+    flex: 1,
   },
   solvedContainer: {
     marginBottom: 16,
-    gap: 8, 
+    gap: 8,
   },
   gridContainer: {
     flexDirection: 'row',

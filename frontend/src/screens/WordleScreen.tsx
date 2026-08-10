@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Platform, ScrollView } from 'react-native';
+import { CustomHeader } from '../components/CustomHeader';
 
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -156,8 +157,10 @@ export const WordleScreen = () => {
   const keyboardColors = getKeyboardColors();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>PILOTO DEL DÍA</Text>
+    <View style={styles.container}>
+      <CustomHeader />
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <Text style={styles.title}>MOTO WORDLE</Text>
       
       <TouchableOpacity style={styles.btnRandom} onPress={fetchNewWordle}>
         <Text style={styles.btnRandomText}>🔄 Nuevo Wordle Aleatorio</Text>
@@ -235,6 +238,8 @@ export const WordleScreen = () => {
         ))}
       </View>
     </ScrollView>
+    </View>
+    
   );
 };
 

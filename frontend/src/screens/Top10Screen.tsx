@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, TextInput, Platform } from 'react-native';
 import Top10PodiumCard from '../components/Top10PodiumCard';
 import Top10ListRow from '../components/Top10ListRow';
+import { CustomHeader } from '../components/CustomHeader';
 
 export default function Top10Screen() {
   const [raceData, setRaceData] = useState<any>(null);
@@ -112,7 +113,9 @@ export default function Top10Screen() {
   const restOfList = raceData.results.slice(3);
 
   return (
-    <ScrollView
+    <View style={styles.container}>
+      <CustomHeader />
+      <ScrollView
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
@@ -184,6 +187,8 @@ export default function Top10Screen() {
       </View>
 
     </ScrollView>
+    </View>
+    
   );
 }
 
