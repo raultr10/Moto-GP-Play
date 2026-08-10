@@ -12,6 +12,7 @@ export const WordleScreen = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [solution, setSolution] = useState<string>('');
+  const [fullSolutionName, setFullSolutionName] = useState<string>('');
   const [guesses, setGuesses] = useState<string[]>(Array(6).fill(''));
   const [currentGuess, setCurrentGuess] = useState<string>('');
   const [turn, setTurn] = useState<number>(0);
@@ -35,6 +36,7 @@ export const WordleScreen = () => {
       .then(data => {
         //El piloto objetivo ya viene procesado desde el backend
         setSolution(data.wordleTarget);
+        setFullSolutionName(data.name)
         setLoading(false);
       })
       .catch(err => {
@@ -164,7 +166,7 @@ export const WordleScreen = () => {
       {isGameOver && (
         <View style={[styles.resultBox, gameStatus === 'won' ? styles.resultWon : styles.resultLost]}>
           <Text style={styles.resultText}>
-            {gameStatus === 'won' ? '¡BANDERA A CUADROS! ¡Has ganado!' : `¡CAÍDA! El piloto era ${solution}`}
+            {gameStatus === 'won' ? `¡BANDERA A CUADROS! ¡Has ganado! Era ${fullSolutionName}` : `¡CAÍDA! El piloto era ${fullSolutionName}`}
           </Text>
         </View>
       )}
