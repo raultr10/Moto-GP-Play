@@ -6,6 +6,7 @@ import { WordleScreen } from './src/screens/WordleScreen';
 import { GridScreen } from './src/screens/GridScreen';
 import ConnectionsScreen from './src/screens/ConnectionsScreen';
 import Top10Screen from './src/screens/Top10Screen';
+import { FeedbackProvider } from './src/context/FeedbackContext';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -19,7 +20,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <NavigationContainer>
+    <FeedbackProvider>
+      <NavigationContainer>
       <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false}}>
         {/* Pantalla del Menú Principal */}
         <Stack.Screen 
@@ -74,5 +76,6 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </FeedbackProvider>
   );
 }

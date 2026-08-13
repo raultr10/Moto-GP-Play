@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
 import Top10PodiumCard from '../components/Top10PodiumCard';
 import Top10ListRow from '../components/Top10ListRow';
 import { CustomHeader } from '../components/CustomHeader';
+import { useFeedback } from '../context/FeedbackContext';
 
 export default function Top10Screen() {
+  const { showError, showInfo, showConfirm } = useFeedback();
   const [raceData, setRaceData] = useState<any>(null);
   const [revealedIds, setRevealedIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,22 +43,14 @@ export default function Top10Screen() {
       const data = await response.json();
 
       if (data.error) {
-        showCustomAlert('Error', data.error);
+        showError('Error', data.error);
         return;
       }
       setRaceData(data);
     } catch (error) {
-      showCustomAlert('Error', 'Fallo de conexión');
+      showError('Error', 'Fallo de conexión');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const showCustomAlert = (title: string, message: string) => {
-    if (Platform.OS === 'web') {
-      window.alert(`${title}\n\n${message}`);
-    } else {
-      Alert.alert(title, message);
     }
   };
 
@@ -83,10 +77,10 @@ export default function Top10Screen() {
       if (!revealedIds.includes(rider.id.toString())) {
         setRevealedIds([...revealedIds, rider.id.toString()]);
       } else {
-        showCustomAlert('Aviso', '¡Ya has adivinado a este piloto!');
+        showInfo('Aviso', '¡Ya has adivinado a este piloto!');
       }
     } else {
-      showCustomAlert('Fallo', 'Ese piloto no terminó en el Top 10.');
+      showError('Fallo', 'Ese piloto no terminó en el Top 10.');
     }
 
     //Limpiamos el buscador en ambos casos
@@ -97,10 +91,20 @@ export default function Top10Screen() {
   //Función de rendirse y revelar el top 10 completo
   const handleGiveUp = () => {
     if (!raceData) return;
-    const allIds = raceData.results.map((r: any) => r.id);
-    setRevealedIds(allIds);
-    setInputText('');
-    setSuggestions([]);
+    
+    showConfirm(
+      '¿Te rindes?',
+      'Se desvelará todo el Top 10 de esta carrera. ¿Estás seguro de que quieres abandonar?',
+      //Función que se ejecuta SOLO si pulsan "Sí, me rindo"
+      () => {
+        const allIds = raceData.results.map((r: any) => r.id);
+        setRevealedIds(allIds);
+        setInputText('');
+        setSuggestions([]);
+      },
+      'Sí, me rindo',
+      'Seguir jugando'
+    );
   };
 
   if (isLoading || !raceData) {
@@ -182,7 +186,7 @@ export default function Top10Screen() {
       {/* CONTROLES FINALES */}
       <View style={styles.controlsContainer}>
         <TouchableOpacity style={styles.giveUpBtn} onPress={handleGiveUp}>
-          <Text style={styles.giveUpText}>Me rindo</Text>
+          <Text style={styles.giveUpText}>Give up</Text>
         </TouchableOpacity>
       </View>
 

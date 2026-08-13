@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, ScrollView, } from 'react-native';
 import { GridCell } from '../components/GridCell';
 import GameControls from '../components/GameControls'; 
 import { CustomHeader } from '../components/CustomHeader';
+import { useFeedback } from '../context/FeedbackContext';
 
 interface AnswerData {
   id: number | string;
@@ -11,6 +12,7 @@ interface AnswerData {
 }
 
 export const GridScreen = () => {
+  const { showError, showInfo, showConfirm, showSuccess } = useFeedback();
   const [loading, setLoading] = useState(true);
   const [headers, setHeaders] = useState<{ cols: string[], rows: string[] } | null>(null);
 
@@ -52,14 +54,6 @@ export const GridScreen = () => {
       });
   }, []);
 
-  const showCustomAlert = (title: string, message: string) => {
-    if (Platform.OS === 'web') {
-      window.alert(`${title}\n\n${message}`);
-    } else {
-      Alert.alert(title, message);
-    }
-  };
-
   const handleSearch = (text: string) => {
     setInputText(text);
 
@@ -78,7 +72,7 @@ export const GridScreen = () => {
 
     const isAlreadyUsed = gridAnswers.some(answer => answer?.id === rider.id);
     if (isAlreadyUsed) {
-      showCustomAlert('¡Piloto repetido!', 'Ya has colocado a este piloto en el tablero. ¡Busca otra opción!');
+      showInfo('¡Piloto repetido!', 'Ya has colocado a este piloto en el tablero. ¡Busca otra opción!');
       return; 
     }
 
@@ -126,7 +120,7 @@ export const GridScreen = () => {
           });
 
           if (autoFilledCount > 0) {
-            showCustomAlert('¡Jugada Maestra!', `Este piloto era la única opción en el mundo para encajar en otras casillas, así que te las hemos autocompletado por seguridad.`);
+            showSuccess('¡Jugada Maestra!', 'Este piloto era la única opción para encajar en otras casillas, asi que lo autocompletamos.');
           }
         }
 
@@ -135,10 +129,10 @@ export const GridScreen = () => {
         setInputText('');
         setSuggestions([]);
       } else {
-        showCustomAlert('¡Fallo!', data.error);
+        showError('¡Fallo!', data.error)
       }
     } catch (error) {
-      showCustomAlert('Error', 'Error de conexión al verificar.');
+      showError('Error', 'Error de conexión al verificar.');
     }
   };
 
@@ -161,10 +155,10 @@ export const GridScreen = () => {
       if (data.completedBoard) {
         setGridAnswers(data.completedBoard);
       } else {
-        showCustomAlert('Error', 'No se ha podido resolver el tablero.');
+        showError('Error', 'No se ha podido resolver el tablero.');
       }
     } catch (error) {
-      showCustomAlert('Error', 'Fallo de conexión al rendirse.');
+      showError('Error', 'Fallo de conexión al rendirse.');
     } finally {
       setLoading(false);
       setSelectedCellIndex(null);
@@ -174,25 +168,14 @@ export const GridScreen = () => {
   };
 
   const handleGiveUp = () => {
-    if (Platform.OS === 'web') {
-      const confirmGiveUp = window.confirm("¿Te rindes? Completaremos las casillas vacías sin repetir a los pilotos que ya has puesto.");
-      if (confirmGiveUp) {
-        fetchGiveUp();
-      }
-    } else {
-      Alert.alert(
-        "¿Te rindes?",
-        "Completaremos las casillas vacías sin repetir a los pilotos que ya has puesto.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { 
-            text: "Rendirme", 
-            style: "destructive",
-            onPress: fetchGiveUp 
-          }
-        ]
-      );
-    }
+    showConfirm(
+      '¿Te rindes?',
+      'Completaremos las casillas vacías sin repetir a los pilotos que ya has puesto. ¿Estás seguro?',
+      //Función que se ejecuta si pulsan Confirmar
+      fetchGiveUp, 
+      'Rendirme',  
+      'Cancelar'   
+    );
   };
 
   if (loading && !headers) {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
 import PilotCard from '../components/PilotCard';
 import SolvedCategory from '../components/SolvedCategory';
 import GameControls from '../components/GameControls';
 import { CustomHeader } from '../components/CustomHeader';
+import { useFeedback } from '../context/FeedbackContext';
 
 interface Pilot {
   id: string;
@@ -18,6 +19,8 @@ interface CategoryInfo {
 }
 
 export default function ConnectionsScreen() {
+  //Cogemos las funciones del modal que vamos a usar
+  const { showError, showSuccess, showInfo, showConfirm } = useFeedback();
   const [allPilots, setAllPilots] = useState<Pilot[]>([]);
   const [gridItems, setGridItems] = useState<Pilot[]>([]);
   const [categoriesInfo, setCategoriesInfo] = useState<Record<string, CategoryInfo>>({});
@@ -36,7 +39,7 @@ export default function ConnectionsScreen() {
       const data = await response.json();
 
       if (data.error) {
-        showCustomAlert('Error del servidor', data.error);
+        showError('Error del servidor', data.error);
         return;
       }
 
@@ -44,7 +47,7 @@ export default function ConnectionsScreen() {
       setGridItems(data.pilots);
       setCategoriesInfo(data.categoriesInfo);
     } catch (error) {
-      showCustomAlert('Error de red', 'No se ha podido conectar con el backend.');
+      showError('Error de red', 'No se ha podido conectar con el backend.');
     } finally {
       setIsLoading(false);
     }
@@ -54,14 +57,6 @@ export default function ConnectionsScreen() {
   useEffect(() => {
     fetchNewGame();
   }, []);
-
-  const showCustomAlert = (title: string, message: string) => {
-    if (Platform.OS === 'web') {
-      window.alert(`${title}\n\n${message}`);
-    } else {
-      Alert.alert(title, message);
-    }
-  };
 
   const toggleSelection = (id: string) => {
     if (selectedIds.includes(id)) {
@@ -76,7 +71,7 @@ export default function ConnectionsScreen() {
   //Aviso de que hay que seleccionar 4 pilotos
   const handleSubmit = () => {
     if (selectedIds.length !== 4) {
-      showCustomAlert('¡Aviso!', 'Debes seleccionar exactamente 4 pilotos para comprobar.');
+      showInfo('¡Aviso!', 'Debes seleccionar exactamente 4 pilotos para comprobar.');
       return;
     }
 
@@ -97,13 +92,14 @@ export default function ConnectionsScreen() {
       setSolvedCategories([...solvedCategories, winningCategory]);
       setSelectedIds([]);
       setGridItems(gridItems.filter(item => item.category !== winningCategory));
+      showInfo('¡Casi!', '3 pilotos están bien. ¡Te falta uno para completar el grupo!');
 
       //Si son 3 avisamos al usuario
     } else if (maxMatches === 3) {
-      showCustomAlert('¡Casi!', '3 pilotos están bien. ¡Te falta uno para completar el grupo!');
+      showInfo('¡Casi!', '3 pilotos están bien. ¡Te falta uno para completar el grupo!');
 
     } else {
-      showCustomAlert('¡Fallo!', 'Esos pilotos no forman un grupo correcto. Prueba otra combinación.');
+      showError('¡Fallo!', 'Esos pilotos no forman un grupo correcto. Prueba otra combinación.');
     }
   };
 
@@ -112,10 +108,19 @@ export default function ConnectionsScreen() {
   };
 
   const handleGiveUp = () => {
-    const allCategoriesKeys = Object.keys(categoriesInfo);
-    setSolvedCategories(allCategoriesKeys);
-    setGridItems([]);
-    setSelectedIds([]);
+    showConfirm(
+      '¿Te rindes?', 
+      'Si te rindes, desvelaremos todas las soluciones. ¿Estás seguro?',
+      //Esta es la función () => void que solo se ejecuta si el usuario pulsa Confirmar
+      () => {
+        const allCategoriesKeys = Object.keys(categoriesInfo);
+        setSolvedCategories(allCategoriesKeys);
+        setGridItems([]);
+        setSelectedIds([]);
+      },
+      'Sí, me rindo',
+      'Seguir jugando'
+    );
   };
 
   return (
