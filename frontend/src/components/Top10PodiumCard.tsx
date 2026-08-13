@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { getFlag } from '../utils/flags';
 
 interface PodiumCardProps {
   position: number;
@@ -11,11 +12,13 @@ interface PodiumCardProps {
 }
 
 export default function Top10PodiumCard({ position, country, name, imageUrl, isRevealed, isFirst }: PodiumCardProps) {
+  const safeCountryCode = country.substring(0, 3).toUpperCase();
+
   return (
     <View style={[styles.card, isFirst && styles.firstPlaceCard]}>
       <View style={styles.header}>
         <Text style={styles.positionText}>{position}</Text>
-        <Text style={styles.flag}>{country.substring(0, 3).toUpperCase()}</Text>
+        <Image source={getFlag(safeCountryCode)} style={styles.flagIcon} resizeMode="contain" />
       </View>
 
       {isRevealed ? (
@@ -51,11 +54,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 8,
     zIndex: 10,
   },
   positionText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
-  flag: { color: '#CCC', fontSize: 14, fontWeight: 'bold' },
+  flagIcon: { width: 28, height: 20, borderRadius: 2 }, 
   revealedContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 8 },
   image: { width: '100%', height: '100%', position: 'absolute', opacity: 0.8 },
   nameText: { color: '#FFF', fontSize: 12, fontWeight: 'bold', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 4, width: '100%' },

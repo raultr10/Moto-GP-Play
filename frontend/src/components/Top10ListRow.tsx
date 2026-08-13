@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { getFlag } from '../utils/flags';
 
 interface ListRowProps {
   position: number;
@@ -9,11 +10,13 @@ interface ListRowProps {
 }
 
 export default function Top10ListRow({ position, country, name, isRevealed }: ListRowProps) {
+  const safeCountryCode = country.substring(0, 3).toUpperCase();
+  
   return (
     <View style={styles.row}>
       <View style={styles.leftSide}>
         <Text style={styles.positionText}>{position}</Text>
-        <Text style={styles.flag}>{country.substring(0, 3).toUpperCase()}</Text>
+        <Image source={getFlag(safeCountryCode)} style={styles.flagIcon} resizeMode="contain" />
       </View>
       
       <View style={styles.rightSide}>
@@ -41,7 +44,7 @@ const styles = StyleSheet.create({
   },
   leftSide: { flexDirection: 'row', alignItems: 'center', width: 60, gap: 10 },
   positionText: { color: '#FFF', fontSize: 16, fontWeight: 'bold', width: 20 },
-  flag: { color: '#CCC', fontSize: 14, fontWeight: 'bold' },
+  flagIcon: { width: 26, height: 18, borderRadius: 2 }, 
   rightSide: { flex: 1, marginLeft: 10 },
   nameText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   hiddenLine: { height: 12, backgroundColor: '#333', borderRadius: 6, width: '80%' },
