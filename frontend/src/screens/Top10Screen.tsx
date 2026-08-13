@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import Top10PodiumCard from '../components/Top10PodiumCard';
 import Top10ListRow from '../components/Top10ListRow';
 import { CustomHeader } from '../components/CustomHeader';
@@ -117,7 +117,10 @@ export default function Top10Screen() {
   const restOfList = raceData.results.slice(3);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <CustomHeader />
       <ScrollView
       style={styles.container}
@@ -191,7 +194,7 @@ export default function Top10Screen() {
       </View>
 
     </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
     
   );
 }

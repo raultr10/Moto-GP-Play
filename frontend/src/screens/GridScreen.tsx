@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, ScrollView, } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { GridCell } from '../components/GridCell';
 import GameControls from '../components/GameControls'; 
 import { CustomHeader } from '../components/CustomHeader';
@@ -183,7 +183,10 @@ export const GridScreen = () => {
   }
 
   return (
-    <View style={styles.mainWrapper}>
+    <KeyboardAvoidingView 
+      style={styles.mainWrapper} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <CustomHeader />
       <ScrollView
       style={styles.container}
@@ -266,7 +269,7 @@ export const GridScreen = () => {
       </View>
 
     </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
