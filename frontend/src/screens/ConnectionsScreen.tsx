@@ -92,7 +92,7 @@ export default function ConnectionsScreen() {
       setSolvedCategories([...solvedCategories, winningCategory]);
       setSelectedIds([]);
       setGridItems(gridItems.filter(item => item.category !== winningCategory));
-      showInfo('¡Casi!', '3 pilotos están bien. ¡Te falta uno para completar el grupo!');
+      showSuccess('¡CORRECTO!', `Has encontrado el grupo: ${winningCategory}`);
 
       //Si son 3 avisamos al usuario
     } else if (maxMatches === 3) {
