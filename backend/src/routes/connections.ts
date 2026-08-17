@@ -139,7 +139,6 @@ connectionsRoute.get('/random', async (c) => {
       'COMPAÑEROS DE PEDROSA'
     ];
 
-    // 🔴 2. CREAMOS EL POOL Y GENERAMOS COLORES/TEXTOS AUTOMÁTICAMENTE
     let CATEGORIES_POOL: Record<string, any> = {
       'CAMPEÓN': { color: '#FFD700', desc: 'Han ganado un mundial en cualquier categoría' },
       'CAMPEÓN MOTO2': { color: '#C0C0C0', desc: 'Fueron campeones del mundo de Moto2' },
@@ -171,16 +170,12 @@ connectionsRoute.get('/random', async (c) => {
       };
     });
 
-    // 🔴 3. RECOPILAMOS LAS DINÁMICAS (LOGROS)
     const dynamicAchievements = Array.from(availableAchievements);
     dynamicAchievements.forEach(ach => {
       CATEGORIES_POOL[ach] = getCategoryMeta(ach);
     });
 
-    // El bombo de logros tendrá los dinámicos (Top10, poles...) + los estáticos sueltos (Campeón...)
-    const ACHIEVEMENT_CATS = [...MISC_STATIC_CATS, ...dynamicAchievements];
-
-    // Aquí se guardarán los 4 grupos de pilotos
+    //Aquí se guardarán los 4 grupos de pilotos
     let finalGroups: any[] = [];
     let validBoard = false;
     let attempts = 0;
@@ -188,11 +183,10 @@ connectionsRoute.get('/random', async (c) => {
     while (!validBoard && attempts < 300) {
       attempts++;
 
-      // 🔴 4. LÓGICA DE SELECCIÓN CONTROLADA
-      // Cogemos 1 país, 1 equipo y 2 logros aleatorios de sus respectivos bombos
+      //Cogemos 1 país, 1 equipo, 1 logro aleatorio y una categoría estática
       const randomCountry = [...COUNTRY_CATS].sort(() => 0.5 - Math.random())[0];
       const randomTeam = [...TEAM_CATS].sort(() => 0.5 - Math.random())[0];
-      const randomDynamic = [...ACHIEVEMENT_CATS].sort(() => 0.5 - Math.random())[0];
+      const randomDynamic = [...dynamicAchievements].sort(() => 0.5 - Math.random())[0];
       const randomStatic = [...MISC_STATIC_CATS].sort(() => 0.5 - Math.random())[0];
 
       // Juntamos las 4 y las barajamos para que no salgan siempre en el mismo orden visual
