@@ -29,7 +29,6 @@ const buildAchievements = (riderResults: any[]) => {
     
     //Top 10
     if (res.position !== null && res.position <= 10) {
-      achievements.add(`TOP 10 EN ${circuit}`);
       achievements.add(`TOP 10 EN ${year}`);
     }
 
@@ -114,14 +113,28 @@ gridRoute.get('/random', async (c) => {
     //Obtenemos los pilotos y TODAS las categorías que existen en la BD
     const { ridersReady, dynamicCategories } = await getRidersReady();
 
-    //Categorías base (Equipos, Países y Títulos generales)
-    const baseCategories = [
-      'DUCATI LENOVO', 'YAMAHA OFICIAL', 'REPSOL HONDA', 'APRILIA RACING', 'KTM FACTORY', 'SUZUKI', 'VR46', 'GRESINI', 'TRACKHOUSE', 'TECH3', 'PRAMAC', 'LCR HONDA', 'PETRONAS', 'MARC VDS', 'AVINTIA', 'ASPAR', 'FORWARD', 'RNF', 'IODARACING', 'CARDION AB',
-      'ESPAÑA', 'ITALIA', 'FRANCIA', 'AUSTRALIA', 'JAPÓN', 'CAMPEÓN', 'CAMPEÓN MOTO2', 'CAMPEÓN MOTO3', 'GANADOR SPRINT', 'GANADOR CARRERA'
-    ];
+    const countryCounts: Record<string, number> = {};
+    const teamCounts: Record<string, number> = {};
 
-    //Juntamos las base con las que se han generado solas al leer la base de datos
-    const ALL_CATEGORIES = [...baseCategories, ...dynamicCategories];
+    ridersReady.forEach(r => {
+      if (r.country) {
+        const country = r.country.toUpperCase();
+        countryCounts[country] = (countryCounts[country] || 0) + 1;
+      }
+      r.teamNames.forEach(team => {
+        teamCounts[team] = (teamCounts[team] || 0) + 1;
+      });
+    });
+
+    const COUNTRY_CATS = Object.keys(countryCounts).filter(cat => countryCounts[cat]! >= 3);
+    const TEAM_CATS = Object.keys(teamCounts).filter(t => teamCounts[t]! >= 3);
+
+    const STATIC_CATS = [
+      'CAMPEÓN', 'CAMPEÓN MOTOGP', 'CAMPEÓN MOTO2', 'CAMPEÓN MOTO3',
+      'GANADOR CARRERA', 'GANADOR SPRINT',
+      'COMPAÑEROS DE MÁRQUEZ', 'COMPAÑEROS DE ROSSI',
+      'COMPAÑEROS DE LORENZO', 'COMPAÑEROS DE PEDROSA'
+    ];
 
     const getRandomElements = (arr: string[], count: number) => {
       return [...arr].sort(() => 0.5 - Math.random()).slice(0, count);
@@ -136,39 +149,55 @@ gridRoute.get('/random', async (c) => {
     //Al haber tantísimas combinaciones posibles, el servidor puede necesitar probar más veces
     while (!validGridFound && attempts < 500) {
       attempts++;
-      
-      const selectedCategories = getRandomElements(ALL_CATEGORIES, 6);
-      const cols = selectedCategories.slice(0, 3);
-      const rows = selectedCategories.slice(3, 6);
+
+      // Eje 1 (Países y Equipos): Sacamos 3 en total (ej: 2 equipos y 1 país, o 1 equipo y 2 países)
+      const numTeams = Math.random() > 0.5 ? 2 : 1; 
+      const numCountries = 3 - numTeams;
+      const safeTeams = TEAM_CATS.length >= numTeams ? getRandomElements(TEAM_CATS, numTeams) : getRandomElements(TEAM_CATS, TEAM_CATS.length);
+      const safeCountries = COUNTRY_CATS.length >= numCountries ? getRandomElements(COUNTRY_CATS, numCountries) : getRandomElements(COUNTRY_CATS, COUNTRY_CATS.length);
+      const axis1 = [...safeTeams, ...safeCountries];
+
+      // Eje 2 (Estáticas y Dinámicas): Sacamos 3 en total (ej: 2 estáticas y 1 dinámica, o 1 estática y 2 dinámicas)
+      const numStatics = Math.random() > 0.5 ? 2 : 1; 
+      const numDynamics = 3 - numStatics;
+      const axis2 = [
+        ...getRandomElements(STATIC_CATS, numStatics),
+        ...getRandomElements(dynamicCategories, numDynamics)
+      ];
+
+      //Si faltan elementos en el eje 1, rellenamos con estáticas
+      while(axis1.length < 3) axis1.push(getRandomElements(STATIC_CATS, 1)[0]!);
+      //Si faltan elementos en el eje 2, rellenamos con dinámicas
+      while(axis2.length < 3) axis2.push(getRandomElements(dynamicCategories, 1)[0]!);
+
+      //Asignamos un eje a las columnas y otro a las filas aleatoriamente
+      let colsSource = Math.random() > 0.5 ? axis1 : axis2;
+      let rowsSource = colsSource === axis1 ? axis2 : axis1;
+
+      //Barajamos el orden para que visualmente sea impredecible
+      const cols = getRandomElements(colsSource, 3);
+      const rows = getRandomElements(rowsSource, 3);
 
       let isGridPossible = true;
       let currentSolution = Array(9).fill(null); 
       let usedIds = new Set(); 
 
-      for (let c = 0; c < 3; c++) {
-        for (let r = 0; r < 3; r++) {
-          const colCat = cols[c]!;
-          const rowCat = rows[r]!;
+      //Cambiamos las variables 'c' y 'r' por 'cIndex' y 'rIndex' para que no hagan conflicto con el '(c)' del parámetro principal de Hono.
+      //Recorremos todas las casillas
+      for (let cIndex = 0; cIndex < 3; cIndex++) {
+        for (let rIndex = 0; rIndex < 3; rIndex++) {
+          const colCat = cols[cIndex]!;
+          const rowCat = rows[rIndex]!;
 
-          const validRidersForCell = ridersReady.filter(rider => {
-            if (usedIds.has(rider.id)) return false; 
-            return checkMatch(rider, colCat, rider.teamNames) && checkMatch(rider, rowCat, rider.teamNames);
-          });
+          //Comprobamos que cumpla la categoría de la columna y de la fila, y que no se haya usado aún
+          const hasValidRider = ridersReady.some(rider =>
+            checkMatch(rider, colCat, rider.teamNames) && checkMatch(rider, rowCat, rider.teamNames)  
+          );
 
-          if (validRidersForCell.length === 0) {
+          if (!hasValidRider) {
             isGridPossible = false;
             break; 
-          } else {
-            const solutionRider = validRidersForCell[0];
-            usedIds.add(solutionRider!.id); 
-
-            const nameParts = solutionRider!.name.split(' ');
-            currentSolution[r * 3 + c] = {
-              id: solutionRider!.id, 
-              name: nameParts[nameParts.length - 1]!.toUpperCase(),
-              imageUrl: solutionRider!.imageUrl || (solutionRider as any).image_url 
-            };
-          }
+          } 
         }
         if (!isGridPossible) break;
       }
@@ -180,11 +209,6 @@ gridRoute.get('/random', async (c) => {
         finalSolution = currentSolution; 
       }
     }
-
-    if (!validGridFound) {
-      return c.json({ cols: ['DUCATI LENOVO', 'YAMAHA OFICIAL', 'ESPAÑA'], rows: ['CAMPEÓN', 'ITALIA', 'GANADOR SPRINT'], solution: Array(9).fill(null) });
-    }
-
     return c.json({ cols: finalCols, rows: finalRows, solution: finalSolution });
 
   } catch (error) {
