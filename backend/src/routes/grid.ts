@@ -54,6 +54,15 @@ const buildAchievements = (riderResults: any[]) => {
 
 const getRidersReady = async () => {
   const allRiders = await db.select().from(riders);
+
+  const allTeams = await db.select().from(teams);
+  const teamLogos: Record<string, string | null> = {};
+
+  allTeams.forEach(t => {
+    teamLogos[t.name.toUpperCase()] = (t as any).logo_url || (t as any).logoUrl || null;
+  });
+
+  console.log("LOGOS DE EQUIPOS EXTRAÍDOS:", teamLogos);
   
   const allRiderTeams = await db.select({
     riderId: riderTeams.riderId,
@@ -98,7 +107,8 @@ const getRidersReady = async () => {
   //Devolvemos tanto los pilotos preparados como la lista de categorías reales
   return { 
     ridersReady: mappedRiders, 
-    dynamicCategories: Array.from(availableAchievements) 
+    dynamicCategories: Array.from(availableAchievements) ,
+    teamLogos
   };
 };
 
@@ -111,7 +121,7 @@ gridRoute.get('/', async (c) => {
 gridRoute.get('/random', async (c) => {
   try {
     //Obtenemos los pilotos y TODAS las categorías que existen en la BD
-    const { ridersReady, dynamicCategories } = await getRidersReady();
+    const { ridersReady, dynamicCategories, teamLogos } = await getRidersReady();
 
     const countryCounts: Record<string, number> = {};
     const teamCounts: Record<string, number> = {};
@@ -209,7 +219,27 @@ gridRoute.get('/random', async (c) => {
         finalSolution = currentSolution; 
       }
     }
-    return c.json({ cols: finalCols, rows: finalRows, solution: finalSolution });
+    if (!validGridFound) {
+      return c.json({ error: 'No se pudo generar un tablero válido' }, 500);
+    }
+
+    const formatHeader = (cat: string) => {
+      if (TEAM_CATS.includes(cat)) return { label: cat, type: 'TEAM', imageUrl: teamLogos[cat] || null };
+      if (COUNTRY_CATS.includes(cat)) return { label: cat, type: 'COUNTRY' };
+      if (STATIC_CATS.includes(cat)) return { label: cat, type: 'STATIC' };
+      
+      //Si tiene un " EN ", es dinámica (Ej: "PODIO EN QATAR")
+      if (cat.includes(' EN ')) {
+        const parts = cat.split(' EN ');
+        return { label: cat, type: 'DYNAMIC', prefix: parts[0], suffix: parts[1] };
+      }
+      return { label: cat, type: 'UNKNOWN' };
+    };
+
+    const formattedCols = finalCols.map(formatHeader);
+    const formattedRows = finalRows.map(formatHeader);
+
+    return c.json({ cols: formattedCols, rows: formattedRows, solution: finalSolution });
 
   } catch (error) {
     console.error("Error generando Grid:", error);
@@ -226,8 +256,12 @@ gridRoute.post('/guess', async (c) => {
     const rider = ridersReady.find(r => r.id === riderId);
     if (!rider) return c.json({ valid: false, error: 'Piloto fantasma' });
 
-    const isRowValid = checkMatch(rider, rowCategory, rider.teamNames);
-    const isColValid = checkMatch(rider, colCategory, rider.teamNames);
+    //Si el frontend nos manda el objeto entero { label: "ESPAÑA", type: ... }, extraemos solo la etiqueta.
+    const rowCatString = typeof rowCategory === 'object' ? rowCategory.label : rowCategory;
+    const colCatString = typeof colCategory === 'object' ? colCategory.label : colCategory;
+
+    const isRowValid = checkMatch(rider, rowCatString, rider.teamNames);
+    const isColValid = checkMatch(rider, colCatString, rider.teamNames);
 
     if (!isRowValid || !isColValid) {
       return c.json({ valid: false, error: 'Ese piloto no encaja en esta casilla' });
@@ -238,13 +272,15 @@ gridRoute.post('/guess', async (c) => {
     const autoFillIndexes: number[] = [];
     if (cols && rows) {
       for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
+        for (let cIndex = 0; cIndex < 3; cIndex++) {
+          const gridRowCat = typeof rows[r] === 'object' ? rows[r].label : rows[r];
+          const gridColCat = typeof cols[cIndex] === 'object' ? cols[cIndex].label : cols[cIndex];
           const validRidersForThisCell = ridersReady.filter(dbRider => {
-            return checkMatch(dbRider, rows[r], dbRider.teamNames) && checkMatch(dbRider, cols[c], dbRider.teamNames);
+            return checkMatch(dbRider, gridRowCat, dbRider.teamNames) && checkMatch(dbRider, gridColCat, dbRider.teamNames);
           });
 
           if (validRidersForThisCell.length === 1 && validRidersForThisCell[0]!.id === riderId) {
-            autoFillIndexes.push(r * 3 + c);
+            autoFillIndexes.push(r * 3 + cIndex);
           }
         }
       }
@@ -273,21 +309,24 @@ gridRoute.post('/giveup', async (c) => {
     const finalBoard = [...currentAnswers];
 
     for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 3; c++) {
-        const index = r * 3 + c;
+      for (let cIndex = 0; cIndex < 3; cIndex++) {
+        const index = r * 3 + cIndex;
+
+        const gridRowCat = typeof rows[r] === 'object' ? rows[r].label : rows[r];
+        const gridColCat = typeof cols[cIndex] === 'object' ? cols[cIndex].label : cols[cIndex];
         
         //Para que rellene solo las casillas que están vacías
         if (finalBoard[index] === null) {
           let validRiders = ridersReady.filter(rider => {
             if (usedIds.has(rider.id)) return false; 
-            return checkMatch(rider, cols[c], rider.teamNames) && checkMatch(rider, rows[r], rider.teamNames);
+            return checkMatch(rider, gridColCat, rider.teamNames) && checkMatch(rider, gridRowCat, rider.teamNames);
           });
 
           //Salvavidas por si ha habido un error y se agotan las opciones de pilotos
           //Mejor que salga uno repetido a una casilla vacía
           if (validRiders.length === 0) {
             validRiders = ridersReady.filter(rider => {
-              return checkMatch(rider, cols[c], rider.teamNames) && checkMatch(rider, rows[r], rider.teamNames);
+              return checkMatch(rider, gridColCat, rider.teamNames) && checkMatch(rider, gridRowCat, rider.teamNames);
             });
           }
 

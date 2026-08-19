@@ -12,13 +12,13 @@ interface PodiumCardProps {
 }
 
 export default function Top10PodiumCard({ position, country, name, imageUrl, isRevealed, isFirst }: PodiumCardProps) {
-  const safeCountryCode = country.substring(0, 3).toUpperCase();
+  const cleanCountry = country ? country.toUpperCase().trim() : '';
 
   return (
     <View style={[styles.card, isFirst && styles.firstPlaceCard]}>
       <View style={styles.header}>
         <Text style={styles.positionText}>{position}</Text>
-        <Image source={getFlag(safeCountryCode)} style={styles.flagIcon} resizeMode="contain" />
+        <Image source={getFlag(cleanCountry)} style={styles.flagIcon} resizeMode="contain" />
       </View>
 
       {isRevealed ? (

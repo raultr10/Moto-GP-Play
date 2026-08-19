@@ -11,10 +11,18 @@ interface AnswerData {
   imageUrl?: string;
 }
 
+export interface HeaderData {
+  label: string;
+  type: string;
+  imageUrl?: string;
+  prefix?: string;
+  suffix?: string;
+}
+
 export const GridScreen = () => {
   const { showError, showInfo, showConfirm, showSuccess } = useFeedback();
   const [loading, setLoading] = useState(true);
-  const [headers, setHeaders] = useState<{ cols: string[], rows: string[] } | null>(null);
+  const [headers, setHeaders] = useState<{ cols: HeaderData[], rows: HeaderData[] } | null>(null);
 
   const [gridAnswers, setGridAnswers] = useState<(AnswerData | null)[]>(Array(9).fill(null));
   
@@ -206,13 +214,13 @@ export const GridScreen = () => {
         <View style={styles.row}>
           <GridCell type="empty" />
           {headers?.cols.map((col, i) => (
-            <GridCell key={`col-${i}`} type="header" label={col} />
+            <GridCell key={`col-${i}`} type="header" label={col.label} headerData={col} />
           ))}
         </View>
 
-        {headers?.rows.map((rowLabel, rowIndex) => (
+        {headers?.rows.map((rowItem, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.row}>
-            <GridCell type="header" label={rowLabel} />
+            <GridCell type="header" label={rowItem.label} headerData={rowItem} />
 
             {[0, 1, 2].map((colIndex) => {
               const cellIndex = rowIndex * 3 + colIndex;
@@ -225,7 +233,11 @@ export const GridScreen = () => {
                   label={answer ? answer.name : ""} 
                   imageUrl={answer?.imageUrl}       
                   isSelected={selectedCellIndex === cellIndex}
-                  onPress={() => setSelectedCellIndex(cellIndex)}
+                  onPress={() => {
+                    if (!answer) {
+                      setSelectedCellIndex(cellIndex)
+                    }
+                  }}
                 />
               );
             })}

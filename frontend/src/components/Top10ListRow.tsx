@@ -10,13 +10,13 @@ interface ListRowProps {
 }
 
 export default function Top10ListRow({ position, country, name, isRevealed }: ListRowProps) {
-  const safeCountryCode = country.substring(0, 3).toUpperCase();
+  const cleanCountry = country ? country.toUpperCase().trim() : '';
   
   return (
     <View style={styles.row}>
       <View style={styles.leftSide}>
         <Text style={styles.positionText}>{position}</Text>
-        <Image source={getFlag(safeCountryCode)} style={styles.flagIcon} resizeMode="contain" />
+        <Image source={getFlag(cleanCountry)} style={styles.flagIcon} resizeMode="contain" />
       </View>
       
       <View style={styles.rightSide}>
