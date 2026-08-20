@@ -19,8 +19,24 @@ interface GridCellProps {
   headerData?: HeaderData;
 }
 
+const getRiderFace = (label?: string) => {
+  const clean = label?.trim().toUpperCase();
+  switch (clean) {
+    case 'COMPAÑEROS DE ROSSI':
+      return require('../../assets/ValentinoRossi.png');
+    case 'COMPAÑEROS DE MÁRQUEZ':
+      return require('../../assets/MarcMarquez.png');
+    case 'COMPAÑEROS DE LORENZO':
+      return require('../../assets/JorgeLorenzo.png');
+    case 'COMPAÑEROS DE PEDROSA':
+      return require('../../assets/DaniPedrosa.png');
+    default:
+      return null;
+  }
+};
+
 const getDynamicIcon = (prefix?: string) => {
-  const cleanPrefix = prefix?.trim().toUpperCase();
+  const cleanPrefix = prefix?.trim().toUpperCase() || '';
   switch (cleanPrefix) {
     case 'VICTORIA':
     case 'CAMPEÓN':
@@ -48,7 +64,6 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
     );
   }
 
-  // LÓGICA VISUAL DE LAS CABECERAS
   if (type === 'header') {
     return (
       <View style={[styles.box, styles.headerBox]}>
@@ -76,8 +91,6 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
             />
           )}
 
-          {/* 🔴 CAMBIO 2 (LADO A LADO): Adiós a la superposición. Ahora usamos 'dynamicRow' 
-              para poner la bandera pequeña a la izquierda y el icono a la derecha. */}
           {headerData?.type === 'DYNAMIC' && (
             <View style={styles.dynamicRow}>
               <Image
@@ -95,11 +108,15 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
             </View>
           )}
 
-          {/* 🔴 CAMBIO 3 (ESTÁTICAS EN GRANDE): Si es una estática (ej: CAMPEÓN), 
-              dibujamos el texto en el centro, muy grande y en negrita. */}
           {(headerData?.type === 'STATIC' || headerData?.type === 'UNKNOWN' || !headerData?.type) && (
             <View style={styles.staticContainer}>
-              {getDynamicIcon(label) ? (
+              {getRiderFace(label) ? (
+                <Image
+                  source={getRiderFace(label)}
+                  style={styles.riderFaceIcon}
+                  resizeMode="cover"
+                />
+              ) : getDynamicIcon(label) ? (
                 <Image
                   source={getDynamicIcon(label)}
                   style={styles.staticIconOnly}
@@ -114,8 +131,6 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
           )}
         </View>
 
-        {/* 🔴 CAMBIO 4 (BANDA GRIS): Creamos un pie de foto (Footer) que siempre está abajo,
-            con fondo gris oscuro y el texto completo en pequeño. */}
         <View style={styles.headerFooter}>
           <Text style={styles.headerFooterText} numberOfLines={2}>
             {label}
@@ -186,14 +201,14 @@ const styles = StyleSheet.create({
   fullImage: {
     width: '100%',
     height: '100%',
-    position: 'absolute', // Esto hace que la imagen se ponga de fondo
+    position: 'absolute', 
   },
 
   nameOverlay: {
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.85)', // Barra negra semitransparente como en Formudle
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     paddingVertical: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -212,7 +227,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center'
   },
-  /* NUEVOS ESTILOS PARA LAS CABECERAS VISUALES */
   flagImage: {
     width: '70%',
     height: '40%',
@@ -231,7 +245,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 4,
-    opacity: 0.6, // Hace que la bandera quede un poco atenuada de fondo
+    opacity: 0.6,
     position: 'absolute',
   },
   headerTextDynamic: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 9, textAlign: 'center', marginTop: 2 },
@@ -239,18 +253,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A35',
     borderWidth: 1,
     borderColor: '#3F3F4E',
-    flexDirection: 'column', // Divide la celda en un bloque arriba y un bloque abajo
+    flexDirection: 'column',
   },
   
   headerMainContent: {
-    flex: 1, // Obliga a la parte de arriba a ocupar todo el espacio que sobra
+    flex: 1, 
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 2,
   },
 
   headerFooter: {
-    backgroundColor: '#4A4A57', // El color de la banda gris inferior
+    backgroundColor: '#4A4A57',
     width: '100%',
     paddingVertical: 4,
     paddingHorizontal: 2,
@@ -294,12 +308,11 @@ const styles = StyleSheet.create({
     height: 32,
   },
 
-  // Estilos de LADO A LADO
   dynamicRow: {
-    flexDirection: 'row', // Esto es lo que pone los elementos uno a la izquierda y otro a la derecha
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6, // El espacio entre la bandera y la copa
+    gap: 6,
     width: '100%',
   },
   dynamicFlag: {
@@ -312,5 +325,12 @@ const styles = StyleSheet.create({
   dynamicIcon: {
     width: 24,
     height: 24,
+  },
+  riderFaceIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22, 
+    borderWidth: 1,
+    borderColor: '#4A4A57',
   },
 });
