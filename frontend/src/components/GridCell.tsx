@@ -56,6 +56,11 @@ const getDynamicIcon = (prefix?: string) => {
 
 export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerData }: GridCellProps) => {
   const [showName, setShowName] = useState(false);
+
+  const cleanLabel = label?.trim().toUpperCase() || '';
+  const isSpecificChamp = cleanLabel.startsWith('CAMPEÓN ') && cleanLabel !== 'CAMPEÓN';
+  //Esto se quedará como "MOTO2" o "MOTO3"
+  const champCategory = cleanLabel.replace('CAMPEÓN ', ''); 
   if (type === 'empty') {
     return (
       <View style={[styles.box, styles.emptyBox]}>
@@ -116,6 +121,15 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
                   style={styles.riderFaceIcon}
                   resizeMode="cover"
                 />
+              ) : isSpecificChamp ? (
+                <View style={styles.champComposite}>
+                  <Image
+                    source={require('../../assets/copa.png')}
+                    style={styles.champCompositeIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.champCompositeText}>{champCategory}</Text>
+                </View>
               ) : getDynamicIcon(label) ? (
                 <Image
                   source={getDynamicIcon(label)}
@@ -332,5 +346,21 @@ const styles = StyleSheet.create({
     borderRadius: 22, 
     borderWidth: 1,
     borderColor: '#4A4A57',
+  },
+  champComposite: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2, // Pequeña separación entre la copa y las letras
+  },
+  champCompositeIcon: {
+    width: 26, // Un poco más pequeña para que quepa el texto debajo
+    height: 26,
+  },
+  champCompositeText: {
+    color: '#FFD700', // Un tono dorado a juego con la copa
+    fontSize: 10,
+    fontWeight: '900',
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
