@@ -60,7 +60,11 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
   const cleanLabel = label?.trim().toUpperCase() || '';
   const isSpecificChamp = cleanLabel.startsWith('CAMPEÓN ') && cleanLabel !== 'CAMPEÓN';
   //Esto se quedará como "MOTO2" o "MOTO3"
-  const champCategory = cleanLabel.replace('CAMPEÓN ', ''); 
+  const champCategory = cleanLabel.replace('CAMPEÓN ', '');
+  
+  const dynamicSuffix = headerData?.suffix?.trim() || '';
+  const isYear = dynamicSuffix.length > 0 && !isNaN(Number(dynamicSuffix));
+
   if (type === 'empty') {
     return (
       <View style={[styles.box, styles.emptyBox]}>
@@ -97,20 +101,33 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
           )}
 
           {headerData?.type === 'DYNAMIC' && (
-            <View style={styles.dynamicRow}>
-              <Image
-                source={getFlag(headerData.suffix || '')}
-                style={styles.dynamicFlag}
-                resizeMode="cover"
-              />
-              {getDynamicIcon(headerData.prefix) && (
+            isYear ? (
+              <View style={styles.champComposite}>
+                {getDynamicIcon(headerData.prefix) && (
+                  <Image
+                    source={getDynamicIcon(headerData.prefix)}
+                    style={styles.champCompositeIcon}
+                    resizeMode="contain"
+                  />
+                )}
+                <Text style={styles.champCompositeText}>{dynamicSuffix}</Text>
+              </View>
+            ) : (
+              <View style={styles.dynamicRow}>
                 <Image
-                  source={getDynamicIcon(headerData.prefix)}
-                  style={styles.dynamicIcon}
-                  resizeMode="contain"
+                  source={getFlag(dynamicSuffix)}
+                  style={styles.dynamicFlag}
+                  resizeMode="cover"
                 />
-              )}
-            </View>
+                {getDynamicIcon(headerData.prefix) && (
+                  <Image
+                    source={getDynamicIcon(headerData.prefix)}
+                    style={styles.dynamicIcon}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
+            )
           )}
 
           {(headerData?.type === 'STATIC' || headerData?.type === 'UNKNOWN' || !headerData?.type) && (
