@@ -61,6 +61,8 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
   const isSpecificChamp = cleanLabel.startsWith('CAMPEÓN ') && cleanLabel !== 'CAMPEÓN';
   //Esto se quedará como "MOTO2" o "MOTO3"
   const champCategory = cleanLabel.replace('CAMPEÓN ', '');
+
+  const isRaceWinner = cleanLabel === 'GANADOR CARRERA';
   
   const dynamicSuffix = headerData?.suffix?.trim() || '';
   const isYear = dynamicSuffix.length > 0 && !isNaN(Number(dynamicSuffix));
@@ -146,6 +148,10 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
                   style={styles.riderFaceIcon}
                   resizeMode="cover"
                 />
+              ) : isRaceWinner ? (
+                <View style={styles.p1Container}>
+                  <Text style={styles.p1Text}>P1</Text>
+                </View>
               ) : isSpecificChamp ? (
                 <View style={styles.champComposite}>
                   <Image
@@ -394,5 +400,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  p1Container: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  p1Text: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '900',
+    fontStyle: 'italic',
+    textShadowColor: '#E10600',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 1,
   },
 });
