@@ -65,6 +65,8 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
   const dynamicSuffix = headerData?.suffix?.trim() || '';
   const isYear = dynamicSuffix.length > 0 && !isNaN(Number(dynamicSuffix));
 
+  const isTop10 = headerData?.prefix?.trim().toUpperCase() === 'TOP 10';
+
   if (type === 'empty') {
     return (
       <View style={[styles.box, styles.emptyBox]}>
@@ -102,6 +104,12 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
 
           {headerData?.type === 'DYNAMIC' && (
             isYear ? (
+              isTop10 ? (
+                <View style={styles.champComposite}>
+                  <Text style={styles.top10Title}>TOP 10</Text>
+                  <Text style={styles.champCompositeText}>{dynamicSuffix}</Text>
+                </View>
+              ) :
               <View style={styles.champComposite}>
                 {getDynamicIcon(headerData.prefix) && (
                   <Image
@@ -376,6 +384,13 @@ const styles = StyleSheet.create({
   champCompositeText: {
     color: '#FFD700', // Un tono dorado a juego con la copa
     fontSize: 10,
+    fontWeight: '900',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  top10Title: {
+    color: '#FFF',
+    fontSize: 11,
     fontWeight: '900',
     fontStyle: 'italic',
     textAlign: 'center',
