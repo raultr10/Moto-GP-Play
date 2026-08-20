@@ -37,6 +37,11 @@ const getRiderFace = (label?: string) => {
 
 const getDynamicIcon = (prefix?: string) => {
   const cleanPrefix = prefix?.trim().toUpperCase() || '';
+
+  if (cleanPrefix === 'CAMPEÓN MOTOGP') {
+    return require('../../assets/trofeoMotoGP.png');
+  }
+
   switch (cleanPrefix) {
     case 'VICTORIA':
     case 'CAMPEÓN':
@@ -58,7 +63,8 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
   const [showName, setShowName] = useState(false);
 
   const cleanLabel = label?.trim().toUpperCase() || '';
-  const isSpecificChamp = cleanLabel.startsWith('CAMPEÓN ') && cleanLabel !== 'CAMPEÓN';
+  const isMotoGPChamp = cleanLabel === 'CAMPEÓN MOTOGP';
+  const isSpecificChamp = cleanLabel.startsWith('CAMPEÓN ') && cleanLabel !== 'CAMPEÓN' && !isMotoGPChamp;
   //Esto se quedará como "MOTO2" o "MOTO3"
   const champCategory = cleanLabel.replace('CAMPEÓN ', '');
 
@@ -152,6 +158,12 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
                 <View style={styles.p1Container}>
                   <Text style={styles.p1Text}>P1</Text>
                 </View>
+              ) : isMotoGPChamp ? (
+                <Image
+                  source={getDynamicIcon(label)}
+                  style={styles.motogpTrophyIcon}
+                  resizeMode="contain"
+                />
               ) : isSpecificChamp ? (
                 <View style={styles.champComposite}>
                   <Image
@@ -413,5 +425,9 @@ const styles = StyleSheet.create({
     textShadowColor: '#E10600',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 1,
+  },
+  motogpTrophyIcon: {
+    width: 44,
+    height: 44,
   },
 });
