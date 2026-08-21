@@ -64,10 +64,12 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
 
   const cleanLabel = label?.trim().toUpperCase() || '';
   const isMotoGPChamp = cleanLabel === 'CAMPEÓN MOTOGP';
+
+  const isGlobalChamp = cleanLabel === 'CAMPEÓN';
+
   const isSpecificChamp = cleanLabel.startsWith('CAMPEÓN ') && cleanLabel !== 'CAMPEÓN' && !isMotoGPChamp;
   //Esto se quedará como "MOTO2" o "MOTO3"
   const champCategory = cleanLabel.replace('CAMPEÓN ', '');
-
   const isRaceWinner = cleanLabel === 'GANADOR CARRERA';
   
   const dynamicSuffix = headerData?.suffix?.trim() || '';
@@ -164,6 +166,16 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
                   style={styles.motogpTrophyIcon}
                   resizeMode="contain"
                 />
+              ) : isGlobalChamp ? (
+                <View style={styles.globalChampComposite}>
+                  <Text style={styles.globalStars}>★ ★ ★</Text>
+                  <Image
+                    source={require('../../assets/copa.png')}
+                    style={styles.globalChampIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.globalChampText}>DEL MUNDO</Text>
+                </View>
               ) : isSpecificChamp ? (
                 <View style={styles.champComposite}>
                   <Image
@@ -393,14 +405,14 @@ const styles = StyleSheet.create({
   champComposite: {
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 2, // Pequeña separación entre la copa y las letras
+    gap: 2,
   },
   champCompositeIcon: {
-    width: 26, // Un poco más pequeña para que quepa el texto debajo
+    width: 26,
     height: 26,
   },
   champCompositeText: {
-    color: '#FFD700', // Un tono dorado a juego con la copa
+    color: '#FFD700',
     fontSize: 10,
     fontWeight: '900',
     fontStyle: 'italic',
@@ -429,5 +441,27 @@ const styles = StyleSheet.create({
   motogpTrophyIcon: {
     width: 44,
     height: 44,
+  },
+  globalChampComposite: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 1,
+  },
+  globalStars: {
+    color: '#FFD700',
+    fontSize: 9,
+    letterSpacing: 2,
+    marginBottom: -2, 
+  },
+  globalChampIcon: {
+    width: 24,
+    height: 24,
+  },
+  globalChampText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: '900',
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
