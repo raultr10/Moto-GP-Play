@@ -80,6 +80,8 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
   if (type === 'empty') {
     return (
       <View style={[styles.box, styles.emptyBox]}>
+        <Text style={styles.gridLogoIcon}>🏍️</Text>
+        <Text style={styles.logoText}>MOTO</Text>
         <Text style={styles.logoText}>GRID</Text>
       </View>
     );
@@ -252,6 +254,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#15151A',
     borderWidth: 1,
     borderColor: '#3F3F4E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridLogoIcon: {
+    fontSize: 18,
+    marginBottom: -2,
   },
   logoText: { color: '#E10600', fontWeight: 'bold', fontSize: 16, fontStyle: 'italic' },
 
