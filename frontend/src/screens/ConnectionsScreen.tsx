@@ -153,8 +153,11 @@ export default function ConnectionsScreen() {
             <View style={styles.solvedContainer}>
               {solvedCategories.map((category) => {
                 const info = categoriesInfo[category];
-                // Buscamos en allPilots para que no se pierdan los nombres al resolver
-                const pilotsText = allPilots.filter(p => p.category === category).map(p => p.name).join(', ');
+                const categoryPilots = allPilots.filter(p => p.category === category);
+                //Buscamos en allPilots para que no se pierdan los nombres al resolver
+                const pilotsText = categoryPilots.map(p => p.name).join(', ');
+                //Extraemos las imágenes para enviárselas al componente
+                const pilotImages = categoryPilots.map(p => p.imageUrl);
 
                 return (
                   <SolvedCategory
@@ -162,6 +165,7 @@ export default function ConnectionsScreen() {
                     title={category}
                     pilotsText={pilotsText}
                     color={info?.color || '#555'}
+                    pilotImages={pilotImages}
                   />
                 );
               })}
