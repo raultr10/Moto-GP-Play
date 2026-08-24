@@ -363,22 +363,22 @@ const styles = StyleSheet.create({
   inputWithSuggestions: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
-    borderBottomWidth: 0, // Quitamos la línea de abajo para que se fusione
+    borderBottomWidth: 0, 
   },
   
   suggestionsList: {
-    backgroundColor: '#1E1E26', // Mismo color que el input para que parezcan la misma caja
+    backgroundColor: '#1E1E26',
     borderWidth: 1,
     borderColor: '#FFF', 
-    borderTopWidth: 0, // Sin línea separadora
-    borderBottomLeftRadius: 25, // Continuamos la curva de la píldora en la base
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
     position: 'absolute',
-    top: 50, // Se engancha exactamente donde termina la altura del input
-    left: 0, // Mismo ancho exacto que el input
-    right: 0, // Mismo ancho exacto que el input
-    paddingTop: 10, // Un pelín de aire por arriba
-    paddingBottom: 15, // Un poco de aire por abajo para que respire la última opción
+    top: 50, 
+    left: 0, 
+    right: 0,
+    paddingTop: 10,
+    paddingBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.6,
