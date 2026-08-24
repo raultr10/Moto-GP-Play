@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { GridCell } from '../components/GridCell';
-import GameControls from '../components/GameControls'; 
+import GameControls from '../components/GameControls';
 import { CustomHeader } from '../components/CustomHeader';
 import { useFeedback } from '../context/FeedbackContext';
 
@@ -19,13 +19,20 @@ export interface HeaderData {
   suffix?: string;
 }
 
+const normalizeText = (text: string) => {
+  return text
+    .normalize("NFD") //Separa las letras de sus acentos
+    .replace(/[\u0300-\u036f]/g, "") //Borra los acentos sueltos
+    .toLowerCase(); //Lo pasa todo a minúsculas
+};
+
 export const GridScreen = () => {
   const { showError, showInfo, showConfirm, showSuccess } = useFeedback();
   const [loading, setLoading] = useState(true);
   const [headers, setHeaders] = useState<{ cols: HeaderData[], rows: HeaderData[] } | null>(null);
 
   const [gridAnswers, setGridAnswers] = useState<(AnswerData | null)[]>(Array(9).fill(null));
-  
+
   const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(null);
   const [inputText, setInputText] = useState('');
   const [allRiders, setAllRiders] = useState<any[]>([]);
@@ -66,12 +73,14 @@ export const GridScreen = () => {
     setInputText(text);
 
     if (text.length > 0) {
-      const filtered = allRiders.filter(rider =>
-        rider.name.toLowerCase().includes(text.toLowerCase())
-      );
+      const searchNormalized = normalizeText(text);
+      const filtered = allRiders.filter(rider => {
+        const riderNameNormalized = normalizeText(rider.name);
+        return riderNameNormalized.includes(searchNormalized);
+      });
       setSuggestions(filtered);
     } else {
-      setSuggestions([]); 
+      setSuggestions([]);
     }
   };
 
@@ -81,7 +90,7 @@ export const GridScreen = () => {
     const isAlreadyUsed = gridAnswers.some(answer => answer?.id === rider.id);
     if (isAlreadyUsed) {
       showInfo('¡Piloto repetido!', 'Ya has colocado a este piloto en el tablero. ¡Busca otra opción!');
-      return; 
+      return;
     }
 
     const rowIndex = Math.floor(selectedCellIndex / 3);
@@ -112,14 +121,14 @@ export const GridScreen = () => {
         const answerData = {
           id: rider.id,
           name: lastName,
-          imageUrl: data.imageUrl || rider.image_url 
+          imageUrl: data.imageUrl || rider.image_url
         };
 
         newAnswers[selectedCellIndex] = answerData;
 
         if (data.autoFillIndexes && data.autoFillIndexes.length > 0) {
           let autoFilledCount = 0;
-          
+
           data.autoFillIndexes.forEach((index: number) => {
             if (index !== selectedCellIndex && !newAnswers[index]) {
               newAnswers[index] = answerData;
@@ -180,9 +189,9 @@ export const GridScreen = () => {
       '¿Te rindes?',
       'Completaremos las casillas vacías sin repetir a los pilotos que ya has puesto. ¿Estás seguro?',
       //Función que se ejecuta si pulsan Confirmar
-      fetchGiveUp, 
-      'Rendirme',  
-      'Cancelar'   
+      fetchGiveUp,
+      'Rendirme',
+      'Cancelar'
     );
   };
 
@@ -190,106 +199,115 @@ export const GridScreen = () => {
     return <View style={styles.center}><ActivityIndicator size="large" color="#e10600" /></View>;
   }
 
+  const isListOpen = suggestions.length > 0 && selectedCellIndex !== null;
+
   return (
-    <KeyboardAvoidingView 
-      style={styles.mainWrapper} 
+    <KeyboardAvoidingView
+      style={styles.mainWrapper}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <CustomHeader />
       <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
-      keyboardShouldPersistTaps="handled"
-    >
+        style={styles.container}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
 
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>MOTO GRID</Text>
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>MOTO GRID</Text>
 
-        <TouchableOpacity style={styles.refreshButton} onPress={fetchRandomGrid}>
-          <Text style={styles.refreshButtonText}>🔄 Nuevo Grid Aleatorio</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={styles.refreshButton} onPress={fetchRandomGrid}>
+            <Text style={styles.refreshButtonText}>🔄 Nuevo Grid Aleatorio</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.gridBoard}>
-        <View style={styles.row}>
-          <GridCell type="empty" />
-          {headers?.cols.map((col, i) => (
-            <GridCell key={`col-${i}`} type="header" label={col.label} headerData={col} />
+        <View style={styles.gridBoard}>
+          <View style={styles.row}>
+            <GridCell type="empty" />
+            {headers?.cols.map((col, i) => (
+              <GridCell key={`col-${i}`} type="header" label={col.label} headerData={col} />
+            ))}
+          </View>
+
+          {headers?.rows.map((rowItem, rowIndex) => (
+            <View key={`row-${rowIndex}`} style={styles.row}>
+              <GridCell type="header" label={rowItem.label} headerData={rowItem} />
+
+              {[0, 1, 2].map((colIndex) => {
+                const cellIndex = rowIndex * 3 + colIndex;
+                const answer = gridAnswers[cellIndex];
+
+                return (
+                  <GridCell
+                    key={`cell-${cellIndex}`}
+                    type="cell"
+                    label={answer ? answer.name : ""}
+                    imageUrl={answer?.imageUrl}
+                    isSelected={selectedCellIndex === cellIndex}
+                    onPress={() => {
+                      if (!answer) {
+                        setSelectedCellIndex(cellIndex)
+                      }
+                    }}
+                  />
+                );
+              })}
+            </View>
           ))}
         </View>
 
-        {headers?.rows.map((rowItem, rowIndex) => (
-          <View key={`row-${rowIndex}`} style={styles.row}>
-            <GridCell type="header" label={rowItem.label} headerData={rowItem} />
+        <View style={styles.searchSectionWrapper}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={[
+              styles.input, 
+              selectedCellIndex === null && styles.inputDisabled,
+              isListOpen && styles.inputWithSuggestions 
+            ]}
+            placeholder={selectedCellIndex !== null ? "Busca un piloto..." : "Selecciona una casilla primero"}
+            placeholderTextColor="#888"
+            value={inputText}
+            onChangeText={handleSearch}
+            editable={selectedCellIndex !== null}
+            selectionColor="#E10600"
+          />
 
-            {[0, 1, 2].map((colIndex) => {
-              const cellIndex = rowIndex * 3 + colIndex;
-              const answer = gridAnswers[cellIndex]; 
+          {isListOpen && (
+            <View style={styles.suggestionsList}>
+              <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
+                {suggestions.map((rider) => (
+                  <TouchableOpacity
+                    key={rider.id}
+                    style={styles.suggestionItem}
+                    onPress={() => handleSelectRider(rider)}
+                  >
+                    <Text style={styles.suggestionText}>{rider.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
 
-              return (
-                <GridCell
-                  key={`cell-${cellIndex}`}
-                  type="cell"
-                  label={answer ? answer.name : ""} 
-                  imageUrl={answer?.imageUrl}       
-                  isSelected={selectedCellIndex === cellIndex}
-                  onPress={() => {
-                    if (!answer) {
-                      setSelectedCellIndex(cellIndex)
-                    }
-                  }}
-                />
-              );
-            })}
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={[styles.input, selectedCellIndex === null && styles.inputDisabled]}
-          placeholder={selectedCellIndex !== null ? "Busca un piloto..." : "Selecciona una casilla primero"}
-          placeholderTextColor="#666"
-          value={inputText}
-          onChangeText={handleSearch}
-          editable={selectedCellIndex !== null}
-        />
-
-        {suggestions.length > 0 && selectedCellIndex !== null && (
-          <View style={styles.suggestionsList}>
-            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 150 }}>
-              {suggestions.map((rider) => (
-                <TouchableOpacity
-                  key={rider.id}
-                  style={styles.suggestionItem}
-                  onPress={() => handleSelectRider(rider)}
-                >
-                  <Text style={styles.suggestionText}>{rider.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+        {!selectedCellIndex && (
+          <Text style={styles.helperText}>Selecciona una casilla vacía</Text>
         )}
       </View>
 
-      {!selectedCellIndex && (
-        <Text style={styles.helperText}>Selecciona una casilla para jugar</Text>
-      )}
+        <View style={{ marginTop: 30 }}>
+          <GameControls onGiveUp={handleGiveUp} />
+        </View>
 
-      <View style={{ marginTop: 30 }}>
-        <GameControls onGiveUp={handleGiveUp} />
-      </View>
-
-    </ScrollView>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#15151A', 
-    padding: 16 
+  container: {
+    flex: 1,
+    backgroundColor: '#15151A',
+    padding: 16
   },
   center: { flex: 1, backgroundColor: '#15151A', justifyContent: 'center', alignItems: 'center' },
 
@@ -317,50 +335,66 @@ const styles = StyleSheet.create({
   gridBoard: { maxWidth: 500, alignSelf: 'center', width: '100%', zIndex: 1 },
   row: { flexDirection: 'row', justifyContent: 'center', marginBottom: 4 },
 
+  searchSectionWrapper: {
+    marginTop: 30,
+    alignItems: 'center',
+    zIndex: 10, //Muy importante para que la lista flote por encima del resto de cosas
+  },
+
   searchContainer: {
-    marginTop: 40,
-    maxWidth: 350,
-    alignSelf: 'center',
+    maxWidth: 320,
     width: '100%',
+    position: 'relative',
     zIndex: 10,
   },
   input: {
     height: 50,
-    backgroundColor: '#1E1E26',
-    borderWidth: 1,
-    borderColor: '#3F3F4E',
-    color: '#FFF',
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    fontSize: 16,
-  },
-  inputDisabled: { opacity: 0.5 },
-
-  suggestionsList: {
     backgroundColor: '#2A2A35',
     borderWidth: 1,
-    borderColor: '#3F3F4E',
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
+    borderColor: '#FFF',
+    color: '#FFF',
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    fontSize: 16,
+    zIndex: 2,
+  },
+  inputDisabled: { opacity: 0.4, backgroundColor: '#1E1E26', borderColor: '#3F3F4E' },
+
+  inputWithSuggestions: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0, // Quitamos la línea de abajo para que se fusione
+  },
+  
+  suggestionsList: {
+    backgroundColor: '#1E1E26', // Mismo color que el input para que parezcan la misma caja
+    borderWidth: 1,
+    borderColor: '#FFF', 
+    borderTopWidth: 0, // Sin línea separadora
+    borderBottomLeftRadius: 25, // Continuamos la curva de la píldora en la base
+    borderBottomRightRadius: 25,
     position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
+    top: 50, // Se engancha exactamente donde termina la altura del input
+    left: 0, // Mismo ancho exacto que el input
+    right: 0, // Mismo ancho exacto que el input
+    paddingTop: 10, // Un pelín de aire por arriba
+    paddingBottom: 15, // Un poco de aire por abajo para que respire la última opción
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 1, 
   },
   suggestionItem: {
-    padding: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#3F3F4E',
   },
   suggestionText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 15,
   },
   helperText: {
     color: '#888',
