@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Image } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, Image, useWindowDimensions } from 'react-native';
 
 interface PilotCardProps {
   name: string;
@@ -10,6 +10,20 @@ interface PilotCardProps {
 
 export default function PilotCard({ name, isSelected, onPress, imageUrl }: PilotCardProps) {
   const defaultImage = 'https://via.placeholder.com/150/3F3F4E/FFFFFF?text=MOTO';
+
+  const { width } = useWindowDimensions();
+
+  const isSmall = width < 600;
+
+  const getDisplayName = (fullName: string) => {
+    if (!isSmall) {
+      return fullName;
+    }
+
+    const parts = fullName.trim().split(' ');
+    return parts.length > 1 ? parts[parts.length - 1] :fullName;
+  }
+  
 
   return (
     <TouchableOpacity
@@ -25,7 +39,7 @@ export default function PilotCard({ name, isSelected, onPress, imageUrl }: Pilot
         />
       </View>
       <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
-        {name}
+        {getDisplayName(name)}
       </Text>
     </TouchableOpacity>
   );
