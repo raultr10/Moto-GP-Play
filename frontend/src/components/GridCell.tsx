@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, Text, StyleSheet, View, Image } from 'react-native';
+import { Pressable, Text, StyleSheet, View, Image, useWindowDimensions } from 'react-native';
 import { getFlag } from '../utils/flags';
 
 export interface HeaderData {
@@ -61,6 +61,9 @@ const getDynamicIcon = (prefix?: string) => {
 
 export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerData }: GridCellProps) => {
   const [showName, setShowName] = useState(false);
+
+  const { width } = useWindowDimensions();
+  const isSmall = width < 600;
 
   const cleanLabel = label?.trim().toUpperCase() || '';
   const isMotoGPChamp = cleanLabel === 'CAMPEÓN MOTOGP';
@@ -153,11 +156,16 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
           {(headerData?.type === 'STATIC' || headerData?.type === 'UNKNOWN' || !headerData?.type) && (
             <View style={styles.staticContainer}>
               {getRiderFace(label) ? (
-                <Image
-                  source={getRiderFace(label)}
-                  style={styles.riderFaceIcon}
-                  resizeMode="cover"
-                />
+                <View style={styles.teammateContainer}>
+                  <Image
+                    source={getRiderFace(label)}
+                    style={{ width: isSmall ? 38 : 50, height: isSmall ? 38 : 50 }}
+                    resizeMode="contain"
+                  />
+                  <Text style={[styles.teammateText, isSmall && styles.teammateTextSmall]}>
+                    {isSmall ? 'COMPAÑERO' : 'COMPAÑERO'}
+                  </Text>
+                </View>
               ) : isRaceWinner ? (
                 <View style={styles.p1Container}>
                   <Text style={styles.p1Text}>P1</Text>
@@ -287,7 +295,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     backgroundColor: '#2D1E20',
   },
-  
+
   answeredImage: {
     width: '85%',
     height: '85%',
@@ -415,12 +423,22 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  riderFaceIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22, 
-    borderWidth: 1,
-    borderColor: '#4A4A57',
+teammateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  teammateText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+    marginTop: -2, // Sube ligeramente el texto para integrarlo mejor con la cara
+    textShadowColor: '#3b82f6', // Efecto de contorno azul como en la foto
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  teammateTextSmall: {
+    fontSize: 8,
+    marginTop: -1,
   },
   champComposite: {
     justifyContent: 'center',
