@@ -213,7 +213,12 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
   }
   return (
     <Pressable
-      style={[styles.box, styles.cellBox, isSelected && styles.selectedBox]}
+      style={[
+        styles.box, 
+        styles.cellBox, 
+        label ? styles.answeredBox : null, 
+        isSelected && styles.selectedBox
+      ]}
       onPress={onPress}
       onPressIn={() => setShowName(true)}
       onPressOut={() => setShowName(false)}
@@ -224,7 +229,7 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
         <>
           <Image
             source={{ uri: imageUrl || 'https://via.placeholder.com/150/3F3F4E/FFFFFF?text=MOTO' }}
-            style={styles.fullImage}
+            style={styles.answeredImage}
             resizeMode="cover"
           />
           {showName && (
@@ -270,15 +275,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3F3F4E',
   },
+
+  answeredBox: {
+    backgroundColor: '#8F141B', 
+    justifyContent: 'flex-end', 
+    alignItems: 'center',
+  },
+
   selectedBox: {
     borderColor: '#E10600',
     borderWidth: 2,
     backgroundColor: '#2D1E20',
   },
-  fullImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute', 
+  
+  answeredImage: {
+    width: '85%',
+    height: '85%',
   },
 
   nameOverlay: {
