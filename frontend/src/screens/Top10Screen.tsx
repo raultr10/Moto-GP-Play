@@ -5,6 +5,14 @@ import Top10ListRow from '../components/Top10ListRow';
 import { CustomHeader } from '../components/CustomHeader';
 import { useFeedback } from '../context/FeedbackContext';
 
+// Función para ignorar tildes y mayúsculas en las búsquedas, igual que en el Grid
+const normalizeText = (text: string) => {
+  return text
+    .normalize("NFD") 
+    .replace(/[\u0300-\u036f]/g, "") 
+    .toLowerCase(); 
+};
+
 export default function Top10Screen() {
   const { showError, showInfo, showConfirm } = useFeedback();
   const [raceData, setRaceData] = useState<any>(null);
@@ -15,13 +23,11 @@ export default function Top10Screen() {
   const [allRiders, setAllRiders] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
 
-  //Cargamos la lista de pilotos para el buscador
   useEffect(() => {
     fetchNewGame();
     fetchAllRiders();
   }, []);
 
-  //Función para traer todos los pilotos
   const fetchAllRiders = async () => {
     try {
       const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/riders`);
@@ -54,20 +60,21 @@ export default function Top10Screen() {
     }
   };
 
-  //Lógica del buscador
+  // Buscador actualizado para usar la misma lógica de texto normalizado
   const handleSearch = (text: string) => {
     setInputText(text);
     if (text.length > 0) {
-      const filtered = allRiders.filter(rider =>
-        rider.name.toLowerCase().includes(text.toLowerCase())
-      );
+      const searchNormalized = normalizeText(text);
+      const filtered = allRiders.filter(rider => {
+        const riderNameNormalized = normalizeText(rider.name);
+        return riderNameNormalized.includes(searchNormalized);
+      });
       setSuggestions(filtered);
     } else {
       setSuggestions([]);
     }
   };
 
-  //Se ejecuta al seleccionar un piloto de la lista de sugerencias
   const handleSelectRider = (rider: any) => {
     if (!raceData) return;
 
@@ -83,19 +90,16 @@ export default function Top10Screen() {
       showError('Fallo', 'Ese piloto no terminó en el Top 10.');
     }
 
-    //Limpiamos el buscador en ambos casos
     setInputText('');
     setSuggestions([]);
   };
 
-  //Función de rendirse y revelar el top 10 completo
   const handleGiveUp = () => {
     if (!raceData) return;
     
     showConfirm(
       '¿Te rindes?',
       'Se desvelará todo el Top 10 de esta carrera. ¿Estás seguro de que quieres abandonar?',
-      //Función que se ejecuta SOLO si pulsan "Sí, me rindo"
       () => {
         const allIds = raceData.results.map((r: any) => r.id);
         setRevealedIds(allIds);
@@ -116,6 +120,9 @@ export default function Top10Screen() {
   const pos3 = raceData.results[2];
   const restOfList = raceData.results.slice(3);
 
+  // Variable para controlar si la lista está abierta y cambiar la forma del input
+  const isListOpen = suggestions.length > 0;
+
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
@@ -123,79 +130,79 @@ export default function Top10Screen() {
     >
       <CustomHeader />
       <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-    >
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>MOTO TOP 10</Text>
 
-      {/* CABECERA Y BOTÓN REFRESCAR */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>MOTO TOP 10</Text>
+          <TouchableOpacity style={styles.refreshButton} onPress={fetchNewGame}>
+            <Text style={styles.refreshButtonText}>🔄 Nuevo Top 10 Aleatorio</Text>
+          </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.refreshButton} onPress={fetchNewGame}>
-          <Text style={styles.refreshButtonText}>🔄 Nuevo Top 10 Aleatorio</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.raceBadge}>
+          <Text style={styles.raceBadgeText}>{raceData.year} {raceData.circuitName}</Text>
+        </View>
 
-      <View style={styles.raceBadge}>
-        <Text style={styles.raceBadgeText}>{raceData.year} {raceData.circuitName}</Text>
-      </View>
+        <View style={styles.podiumContainer}>
+          <Top10PodiumCard {...pos2} isRevealed={revealedIds.includes(pos2.id)} />
+          <Top10PodiumCard {...pos1} isRevealed={revealedIds.includes(pos1.id)} isFirst />
+          <Top10PodiumCard {...pos3} isRevealed={revealedIds.includes(pos3.id)} />
+        </View>
 
-      {/* PODIO */}
-      <View style={styles.podiumContainer}>
-        <Top10PodiumCard {...pos2} isRevealed={revealedIds.includes(pos2.id)} />
-        <Top10PodiumCard {...pos1} isRevealed={revealedIds.includes(pos1.id)} isFirst />
-        <Top10PodiumCard {...pos3} isRevealed={revealedIds.includes(pos3.id)} />
-      </View>
+        <View style={styles.listContainer}>
+          {restOfList.map((rider: any) => (
+            <Top10ListRow
+              key={rider.position}
+              {...rider}
+              isRevealed={revealedIds.includes(rider.id)}
+            />
+          ))}
+        </View>
 
-      {/* LISTA DEL 4 AL 10 */}
-      <View style={styles.listContainer}>
-        {restOfList.map((rider: any) => (
-          <Top10ListRow
-            key={rider.position}
-            {...rider}
-            isRevealed={revealedIds.includes(rider.id)}
-          />
-        ))}
-      </View>
+        {/* NUEVO DISEÑO DEL BUSCADOR (importado de GridScreen) */}
+        <View style={styles.searchSectionWrapper}>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={[
+                styles.input, 
+                isListOpen && styles.inputWithSuggestions 
+              ]}
+              placeholder="Busca un piloto..."
+              placeholderTextColor="#888"
+              value={inputText}
+              onChangeText={handleSearch}
+              selectionColor="#E10600"
+            />
 
-      {/* ZONA DEL BUSCADOR */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Busca un piloto..."
-          placeholderTextColor="#666"
-          value={inputText}
-          onChangeText={handleSearch}
-        />
-
-        {suggestions.length > 0 && (
-          <View style={styles.suggestionsList}>
-            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 150 }}>
-              {suggestions.map((rider) => (
-                <TouchableOpacity
-                  key={rider.id}
-                  style={styles.suggestionItem}
-                  onPress={() => handleSelectRider(rider)}
-                >
-                  <Text style={styles.suggestionText}>{rider.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            {isListOpen && (
+              <View style={styles.suggestionsList}>
+                <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
+                  {suggestions.map((rider) => (
+                    <TouchableOpacity
+                      key={rider.id}
+                      style={styles.suggestionItem}
+                      onPress={() => handleSelectRider(rider)}
+                    >
+                      <Text style={styles.suggestionText}>{rider.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
-        )}
-      </View>
+        </View>
 
-      {/* CONTROLES FINALES */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity style={styles.giveUpBtn} onPress={handleGiveUp}>
-          <Text style={styles.giveUpText}>Give up</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity style={styles.giveUpBtn} onPress={handleGiveUp}>
+            <Text style={styles.giveUpText}>Give up</Text>
+          </TouchableOpacity>
+        </View>
 
-    </ScrollView>
+      </ScrollView>
     </KeyboardAvoidingView>
-    
   );
 }
 
@@ -222,43 +229,66 @@ const styles = StyleSheet.create({
   podiumContainer: { flexDirection: 'row', width: '100%', maxWidth: 400, alignItems: 'flex-end', marginBottom: 20, paddingHorizontal: 10 },
   listContainer: { width: '100%', maxWidth: 400, marginBottom: 10 },
 
-  searchContainer: {
+  // ESTILOS NUEVOS DEL BUSCADOR
+  searchSectionWrapper: {
     marginTop: 20,
     marginBottom: 30,
-    maxWidth: 350,
-    alignSelf: 'center',
+    alignItems: 'center',
+    zIndex: 10,
     width: '100%',
+  },
+  searchContainer: {
+    maxWidth: 320,
+    width: '100%',
+    position: 'relative',
     zIndex: 10,
   },
   input: {
     height: 50,
-    backgroundColor: '#1E1E26',
-    borderWidth: 1,
-    borderColor: '#3F3F4E',
-    color: '#FFF',
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    fontSize: 16,
-  },
-  suggestionsList: {
     backgroundColor: '#2A2A35',
     borderWidth: 1,
-    borderColor: '#3F3F4E',
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 5,
+    borderColor: '#FFF',
+    color: '#FFF',
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    fontSize: 16,
+    zIndex: 2,
   },
-  suggestionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#3F3F4E' },
-  suggestionText: { color: '#FFF', fontSize: 16 },
+  inputWithSuggestions: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0, 
+  },
+  suggestionsList: {
+    backgroundColor: '#1E1E26',
+    borderWidth: 1,
+    borderColor: '#FFF', 
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    position: 'absolute',
+    top: 50, 
+    left: 0, 
+    right: 0,
+    paddingTop: 10,
+    paddingBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 1, 
+  },
+  suggestionItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3F3F4E',
+  },
+  suggestionText: {
+    color: '#FFF',
+    fontSize: 15,
+  },
 
   controlsContainer: { width: '100%', maxWidth: 400, alignItems: 'center', zIndex: 1 },
   giveUpBtn: { borderColor: '#e10600', borderWidth: 1, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 20 },
