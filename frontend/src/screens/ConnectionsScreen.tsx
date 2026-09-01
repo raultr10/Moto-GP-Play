@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator, useWindowDimensions } from 'react-native';
 import PilotCard from '../components/PilotCard';
 import SolvedCategory from '../components/SolvedCategory';
 import GameControls from '../components/GameControls';
@@ -28,6 +28,9 @@ export default function ConnectionsScreen() {
   const [solvedCategories, setSolvedCategories] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
+
+  const { width } = useWindowDimensions();
+  const isSmall = width < 600;
 
   const fetchNewGame = async () => {
     setIsLoading(true);
@@ -154,8 +157,12 @@ export default function ConnectionsScreen() {
               {solvedCategories.map((category) => {
                 const info = categoriesInfo[category];
                 const categoryPilots = allPilots.filter(p => p.category === category);
-                //Buscamos en allPilots para que no se pierdan los nombres al resolver
-                const pilotsText = categoryPilots.map(p => p.name).join(', ');
+                //Si es móvil extraemos el apellido del piloto solo
+                const pilotsText = categoryPilots.map(p => {
+                  if (!isSmall) return p.name;
+                  const parts = p.name.trim().split(' ');
+                  return parts.length > 1 ? parts[parts.length - 1] : p.name;
+                }).join(', ');
                 //Extraemos las imágenes para enviárselas al componente
                 const pilotImages = categoryPilots.map(p => p.imageUrl);
 

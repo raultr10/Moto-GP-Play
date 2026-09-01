@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, useWindowDimensions } from 'react-native';
 
 interface SolvedCategoryProps {
   title: string;
@@ -9,29 +9,61 @@ interface SolvedCategoryProps {
 }
 
 export default function SolvedCategory({ title, pilotsText, color, pilotImages }: SolvedCategoryProps) {
+
+  const { width } = useWindowDimensions();
+  const isSmall = width < 600;
+
   return (
     <View style={[styles.container, { backgroundColor: color }]}>
-      {/*GRUPO IZQUIERDO: Piloto 1 y Piloto 2 */}
+      {/* GRUPO IZQUIERDO */}
       <View style={styles.imageGroupLeft}>
         {pilotImages && pilotImages[0] && (
-          <Image source={{ uri: pilotImages[0] }} style={[styles.pilotImg, { zIndex: 1 }]} resizeMode="contain" />
+          <Image 
+            source={{ uri: pilotImages[0] }} 
+            style={[styles.pilotImg, isSmall && styles.pilotImgSmall, { zIndex: 1 }]} 
+            resizeMode="contain" 
+          />
         )}
         {pilotImages && pilotImages[1] && (
-          <Image source={{ uri: pilotImages[1] }} style={[styles.pilotImg, styles.overlapLeft, { zIndex: 2 }]} resizeMode="contain" />
+          <Image 
+            source={{ uri: pilotImages[1] }} 
+            style={[
+              styles.pilotImg, 
+              isSmall && styles.pilotImgSmall, 
+              styles.overlapLeft, 
+              isSmall && styles.overlapSmall, 
+              { zIndex: 2 }
+            ]} 
+            resizeMode="contain" 
+          />
         )}
       </View>
       {/* TEXTO CENTRAL */}
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.pilots}>{pilotsText}</Text>
+      <View style={[styles.textContainer, isSmall && styles.textContainerSmall]}>
+        <Text style={[styles.title, isSmall && styles.titleSmall]}>{title}</Text>
+        <Text style={[styles.pilots, isSmall && styles.pilotsSmall]}>{pilotsText}</Text>
       </View>
       {/*GRUPO DERECHO: Piloto 3 y Piloto 4 */}
       <View style={styles.imageGroupRight}>
         {pilotImages && pilotImages[2] && (
-          <Image source={{ uri: pilotImages[2] }} style={[styles.pilotImg, { zIndex: 2 }]} resizeMode="contain" />
+          <Image 
+            source={{ uri: pilotImages[2] }} 
+            style={[styles.pilotImg, isSmall && styles.pilotImgSmall, { zIndex: 2 }]} 
+            resizeMode="contain" 
+          />
         )}
         {pilotImages && pilotImages[3] && (
-          <Image source={{ uri: pilotImages[3] }} style={[styles.pilotImg, styles.overlapRight, { zIndex: 1 }]} resizeMode="contain" />
+          <Image 
+            source={{ uri: pilotImages[3] }} 
+            style={[
+              styles.pilotImg, 
+              isSmall && styles.pilotImgSmall, 
+              styles.overlapRight, 
+              isSmall && styles.overlapSmall, 
+              { zIndex: 1 }
+            ]} 
+            resizeMode="contain" 
+          />
         )}
       </View>
     </View>
@@ -55,6 +87,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 110, 
   },
+  textContainerSmall: {
+    paddingHorizontal: 95,
+  },
   title: {
     fontSize: 18,
     fontWeight: '900',
@@ -62,12 +97,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase', 
   },
+  titleSmall: {
+    fontSize: 12,
+    lineHeight: 14,
+  },
   pilots: {
     fontSize: 13,
     color: '#121212',
     marginTop: 2,
     fontWeight: '500',
     textAlign: 'center',
+  },
+
+  pilotsSmall: {
+    fontSize: 11,
   },
   
   imageGroupLeft: {
@@ -88,10 +131,17 @@ const styles = StyleSheet.create({
     width: 60,
     height: 70, 
   },
+  pilotImgSmall: {
+    width: 50,
+    height: 60,
+  },
   overlapLeft: {
     marginLeft: -20,
   },
   overlapRight: {
     marginLeft: -20,
+  },
+  overlapSmall: {
+    marginLeft: -15,
   }
 });
