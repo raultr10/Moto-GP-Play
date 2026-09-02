@@ -222,7 +222,7 @@ export default function ConnectionsScreen() {
           </View>
         )}
 
-        {/* CAMBIO 9: Condicionamos los botones para que desaparezcan si gameStatus ya no es 'playing' */}
+        {/* Condicionamos los botones para que desaparezcan si gameStatus ya no es 'playing' */}
         {!isLoading && gameStatus === 'playing' && (
           <View style={styles.controlsWrapper}>
             <GameControls
