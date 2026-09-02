@@ -17,6 +17,7 @@ interface GridCellProps {
   onPress?: () => void;
   imageUrl?: string;
   headerData?: HeaderData;
+  isRevealedByGiveUp?: boolean;
 }
 
 const getRiderFace = (label?: string) => {
@@ -59,7 +60,7 @@ const getDynamicIcon = (prefix?: string) => {
   }
 };
 
-export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerData }: GridCellProps) => {
+export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerData, isRevealedByGiveUp }: GridCellProps) => {
   const [showName, setShowName] = useState(false);
 
   const { width } = useWindowDimensions();
@@ -224,7 +225,7 @@ export const GridCell = ({ type, label, isSelected, onPress, imageUrl, headerDat
       style={[
         styles.box, 
         styles.cellBox, 
-        label ? styles.answeredBox : null, 
+        label ? (isRevealedByGiveUp ? styles.revealedBox : styles.guessedBox) : null, 
         isSelected && styles.selectedBox
       ]}
       onPress={onPress}
@@ -282,6 +283,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E26',
     borderWidth: 1,
     borderColor: '#3F3F4E',
+  },
+
+  guessedBox: {
+    backgroundColor: '#538d4e',
+    justifyContent: 'flex-end', 
+    alignItems: 'center',
+  },
+  revealedBox: {
+    backgroundColor: '#E10600',
+    justifyContent: 'flex-end', 
+    alignItems: 'center',
   },
 
   answeredBox: {

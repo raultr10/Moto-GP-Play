@@ -9,6 +9,7 @@ interface AnswerData {
   id: number | string;
   name: string;
   imageUrl?: string;
+  isRevealedByGiveUp?: boolean;
 }
 
 export interface HeaderData {
@@ -37,17 +38,19 @@ export const GridScreen = () => {
   const [inputText, setInputText] = useState('');
   const [allRiders, setAllRiders] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
 
   const fetchRandomGrid = () => {
+    setGameStatus('playing');
+    setSelectedCellIndex(null);
+    setInputText('');
+    setSuggestions([]);
+    setGridAnswers(Array(9).fill(null));
     setLoading(true);
     fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/daily/grid/random`)
       .then(res => res.json())
       .then(data => {
         setHeaders(data);
-        setGridAnswers(Array(9).fill(null));
-        setSelectedCellIndex(null);
-        setInputText('');
-        setSuggestions([]);
         setLoading(false);
       })
       .catch(err => {
@@ -145,6 +148,11 @@ export const GridScreen = () => {
         setSelectedCellIndex(null);
         setInputText('');
         setSuggestions([]);
+
+        const isBoardFull = newAnswers.every(ans => ans !== null);
+        if (isBoardFull) {
+          setGameStatus('won');
+        }
       } else {
         showError('¡Fallo!', data.error)
       }
@@ -170,7 +178,18 @@ export const GridScreen = () => {
       const data = await response.json();
 
       if (data.completedBoard) {
-        setGridAnswers(data.completedBoard);
+        const newBoard = data.completedBoard.map((newAns: any, idx: number) => {
+          const oldAns = gridAnswers[idx];
+          if (!oldAns) {
+            // Si el usuario no la había rellenado, la marca como revelada por el sistema (Roja)
+            return { ...newAns, isRevealedByGiveUp: true };
+          } else {
+             // Si el usuario ya la había acertado, mantenemos esa propiedad explícitamente en falso (Verde)
+             return { ...newAns, isRevealedByGiveUp: false };
+          }
+        });
+        setGridAnswers(newBoard);
+        setGameStatus('lost'); // Ponemos el juego como perdido
       } else {
         showError('Error', 'No se ha podido resolver el tablero.');
       }
@@ -200,6 +219,7 @@ export const GridScreen = () => {
   }
 
   const isListOpen = suggestions.length > 0 && selectedCellIndex !== null;
+  const isGameOver = gameStatus !== 'playing';
 
   return (
     <KeyboardAvoidingView
@@ -243,9 +263,10 @@ export const GridScreen = () => {
                     type="cell"
                     label={answer ? answer.name : ""}
                     imageUrl={answer?.imageUrl}
+                    isRevealedByGiveUp={answer?.isRevealedByGiveUp}
                     isSelected={selectedCellIndex === cellIndex}
                     onPress={() => {
-                      if (!answer) {
+                      if (!answer && !isGameOver) {
                         setSelectedCellIndex(cellIndex)
                       }
                     }}
@@ -256,47 +277,60 @@ export const GridScreen = () => {
           ))}
         </View>
 
-        <View style={styles.searchSectionWrapper}>
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={[
-              styles.input, 
-              selectedCellIndex === null && styles.inputDisabled,
-              isListOpen && styles.inputWithSuggestions 
-            ]}
-            placeholder={selectedCellIndex !== null ? "Busca un piloto..." : "Selecciona una casilla primero"}
-            placeholderTextColor="#888"
-            value={inputText}
-            onChangeText={handleSearch}
-            editable={selectedCellIndex !== null}
-            selectionColor="#E10600"
-          />
+        {isGameOver ? (
+          <View style={styles.resultContainer}>
+            <Text style={[
+              styles.resultPrimaryText, 
+              gameStatus === 'won' ? styles.textWon : styles.textLost
+            ]}>
+              {gameStatus === 'won' ? '¡Enhorabuena, has completado el grid!' : 'Has perdido. Suerte la próxima vez.'}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.searchSectionWrapper}>
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={[
+                    styles.input, 
+                    selectedCellIndex === null && styles.inputDisabled,
+                    isListOpen && styles.inputWithSuggestions 
+                  ]}
+                  placeholder={selectedCellIndex !== null ? "Busca un piloto..." : "Selecciona una casilla primero"}
+                  placeholderTextColor="#888"
+                  value={inputText}
+                  onChangeText={handleSearch}
+                  editable={selectedCellIndex !== null}
+                  selectionColor="#E10600"
+                />
 
-          {isListOpen && (
-            <View style={styles.suggestionsList}>
-              <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
-                {suggestions.map((rider) => (
-                  <TouchableOpacity
-                    key={rider.id}
-                    style={styles.suggestionItem}
-                    onPress={() => handleSelectRider(rider)}
-                  >
-                    <Text style={styles.suggestionText}>{rider.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                {isListOpen && (
+                  <View style={styles.suggestionsList}>
+                    <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
+                      {suggestions.map((rider) => (
+                        <TouchableOpacity
+                          key={rider.id}
+                          style={styles.suggestionItem}
+                          onPress={() => handleSelectRider(rider)}
+                        >
+                          <Text style={styles.suggestionText}>{rider.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+
+              {!selectedCellIndex && (
+                <Text style={styles.helperText}>Selecciona una casilla vacía</Text>
+              )}
             </View>
-          )}
-        </View>
 
-        {!selectedCellIndex && (
-          <Text style={styles.helperText}>Selecciona una casilla vacía</Text>
+            <View style={{ marginTop: 30 }}>
+              <GameControls onGiveUp={handleGiveUp} />
+            </View>
+          </>
         )}
-      </View>
-
-        <View style={{ marginTop: 30 }}>
-          <GameControls onGiveUp={handleGiveUp} />
-        </View>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -334,6 +368,23 @@ const styles = StyleSheet.create({
 
   gridBoard: { maxWidth: 500, alignSelf: 'center', width: '100%', zIndex: 1 },
   row: { flexDirection: 'row', justifyContent: 'center', marginBottom: 4 },
+
+  resultContainer: {
+    alignItems: 'center',
+    marginTop: 30,
+    marginBottom: 20,
+  },
+  resultPrimaryText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  textWon: {
+    color: '#538d4e', 
+  },
+  textLost: {
+    color: '#E10600',
+  },
 
   searchSectionWrapper: {
     marginTop: 30,
