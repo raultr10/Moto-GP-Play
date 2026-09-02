@@ -69,9 +69,12 @@ export const WordleScreen = () => {
       if (currentGuess === solution) {
         setIsGameOver(true);
         setGameStatus('won');
+        setTurn(turn + 1);
+        setCurrentGuess('');
       } else if (turn === 5) {
         setIsGameOver(true);
         setGameStatus('lost');
+        setTurn(turn + 1);
       } else {
         setTurn(turn + 1);
         setCurrentGuess('');
@@ -166,14 +169,6 @@ export const WordleScreen = () => {
         <Text style={styles.btnRandomText}>🔄 Nuevo Wordle Aleatorio</Text>
       </TouchableOpacity>
 
-      {isGameOver && (
-        <View style={[styles.resultBox, gameStatus === 'won' ? styles.resultWon : styles.resultLost]}>
-          <Text style={styles.resultText}>
-            {gameStatus === 'won' ? `¡BANDERA A CUADROS! ¡Has ganado! Era ${fullSolutionName}` : `¡CAÍDA! El piloto era ${fullSolutionName}`}
-          </Text>
-        </View>
-      )}
-
       <View style={styles.grid}>
         {guesses.map((guess, i) => {
           const isCurrentRow = i === turn;
@@ -205,6 +200,24 @@ export const WordleScreen = () => {
           );
         })}
       </View>
+
+      {isGameOver && (
+          <View style={styles.resultContainer}>
+            <Text style={styles.resultPrimaryText}>
+              {gameStatus === 'won' ? '¡Has ganado!' : 'Has perdido.'}
+            </Text>
+            <Text style={styles.resultSecondaryText}>
+              El piloto correcto es{' '}
+              {/* CAMBIO 3: Asignamos el estilo base en negrita, y dinámicamente aplicamos verde (textWon) o rojo (textLost) */}
+              <Text style={[
+                styles.resultHighlightText, 
+                gameStatus === 'won' ? styles.textWon : styles.textLost
+              ]}>
+                {fullSolutionName}
+              </Text>
+            </Text>
+          </View>
+        )}
 
       <View style={styles.keyboard}>
         {KEYBOARD_ROWS.map((row, i) => (
@@ -262,10 +275,32 @@ const styles = StyleSheet.create({
 
   errorText: { color: '#E10600', fontSize: 16 },
   
-  resultBox: { padding: 12, borderRadius: 8, marginHorizontal: 20, marginBottom: 20, alignItems: 'center', width: '90%', maxWidth: 400 },
-  resultWon: { backgroundColor: '#538d4e' },
-  resultLost: { backgroundColor: '#E10600' },
   resultText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+
+  resultContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+    marginBottom: 20,
+  },
+  resultPrimaryText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  resultSecondaryText: {
+    color: '#FFF',
+    fontSize: 16,
+  },
+  resultHighlightText: {
+    fontWeight: 'bold',
+  },
+  textWon: {
+    color: '#538d4e', // Verde Wordle
+  },
+  textLost: {
+    color: '#E10600', // Rojo
+  },
 
   grid: { paddingHorizontal: 10, alignItems: 'center', marginBottom: 20 },
   row: { flexDirection: 'row', marginBottom: 8 },
