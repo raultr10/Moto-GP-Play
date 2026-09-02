@@ -23,8 +23,10 @@ export default function Top10PodiumCard({ position, country, name, imageUrl, isR
 
       {isRevealed ? (
         <View style={styles.revealedContainer}>
-          {imageUrl && <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />}
-          <Text style={styles.nameText} numberOfLines={2}>{name}</Text>
+          {imageUrl && <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />}
+          <View style={styles.nameContainer}>
+            <Text style={styles.nameText} numberOfLines={2}>{name}</Text>
+          </View>
         </View>
       ) : (
         <View style={styles.hiddenContainer}>
@@ -61,7 +63,15 @@ const styles = StyleSheet.create({
   positionText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
   flagIcon: { width: 28, height: 20, borderRadius: 2 }, 
   revealedContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 8 },
-  image: { width: '100%', height: '100%', position: 'absolute', opacity: 0.8 },
+  image: { width: '100%', height: '110%', position: 'absolute', opacity: 0.9, bottom: 0 },
+  nameContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   nameText: { color: '#FFF', fontSize: 12, fontWeight: 'bold', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 4, width: '100%' },
   hiddenContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   questionMark: { color: '#555', fontSize: 40, fontWeight: 'bold' },
