@@ -4,17 +4,20 @@ import { View, Text, StyleSheet, Image, useWindowDimensions } from 'react-native
 interface SolvedCategoryProps {
   title: string;
   pilotsText: string;
-  color: string;
+  isRevealed?: boolean;
   pilotImages?: (string | undefined)[];
 }
 
-export default function SolvedCategory({ title, pilotsText, color, pilotImages }: SolvedCategoryProps) {
+export default function SolvedCategory({ title, pilotsText, isRevealed, pilotImages }: SolvedCategoryProps) {
 
   const { width } = useWindowDimensions();
   const isSmall = width < 600;
 
   return (
-    <View style={[styles.container, { backgroundColor: color }]}>
+    <View style={[
+      styles.container, 
+      isRevealed ? styles.containerLost : styles.containerWon
+    ]}>
       {/* GRUPO IZQUIERDO */}
       <View style={styles.imageGroupLeft}>
         {pilotImages && pilotImages[0] && (
@@ -82,6 +85,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     paddingVertical: 12,
   },
+  containerWon: {
+    backgroundColor: '#538d4e',
+  },
+  containerLost: {
+    backgroundColor: '#E10600',
+  },
   textContainer: {
     zIndex: 10,
     alignItems: 'center',
@@ -93,9 +102,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#121212',
+    color: '#FFF',
     textAlign: 'center',
-    textTransform: 'uppercase', 
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   titleSmall: {
     fontSize: 12,
@@ -103,10 +115,13 @@ const styles = StyleSheet.create({
   },
   pilots: {
     fontSize: 13,
-    color: '#121212',
+    color: '#FFF',
     marginTop: 2,
     fontWeight: '500',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 
   pilotsSmall: {

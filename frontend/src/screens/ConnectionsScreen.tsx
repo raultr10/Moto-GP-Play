@@ -29,10 +29,15 @@ export default function ConnectionsScreen() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [revealedByGiveUp, setRevealedByGiveUp] = useState<string[]>([]);
+
   const { width } = useWindowDimensions();
   const isSmall = width < 600;
 
   const fetchNewGame = async () => {
+    setGameStatus('playing');
+    setRevealedByGiveUp([]);
     setIsLoading(true);
     setSelectedIds([]);
     setSolvedCategories([]);
@@ -92,11 +97,16 @@ export default function ConnectionsScreen() {
     //Si son 4 es correcto
     if (maxMatches === 4) {
       const winningCategory = selectedPilots[0].category;
-      setSolvedCategories([...solvedCategories, winningCategory]);
+      const newSolved = [...solvedCategories, winningCategory];
+      setSolvedCategories(newSolved);
       setSelectedIds([]);
       setGridItems(gridItems.filter(item => item.category !== winningCategory));
-      showSuccess('¡CORRECTO!', `Has encontrado el grupo: ${winningCategory}`);
 
+      if (newSolved.length === Object.keys(categoriesInfo).length) {
+        setGameStatus('won');
+      } else {
+        showSuccess('¡CORRECTO!', `Has encontrado el grupo: ${winningCategory}`);
+      }
       //Si son 3 avisamos al usuario
     } else if (maxMatches === 3) {
       showInfo('¡Casi!', '3 pilotos están bien. ¡Te falta uno para completar el grupo!');
@@ -112,14 +122,17 @@ export default function ConnectionsScreen() {
 
   const handleGiveUp = () => {
     showConfirm(
-      '¿Te rindes?', 
+      '¿Te rindes?',
       'Si te rindes, desvelaremos todas las soluciones. ¿Estás seguro?',
       //Esta es la función () => void que solo se ejecuta si el usuario pulsa Confirmar
       () => {
         const allCategoriesKeys = Object.keys(categoriesInfo);
-        setSolvedCategories(allCategoriesKeys);
+        const unsolved = allCategoriesKeys.filter(c => !solvedCategories.includes(c));
+        setRevealedByGiveUp(unsolved);
+        setSolvedCategories([...solvedCategories, ...unsolved]);
         setGridItems([]);
         setSelectedIds([]);
+        setGameStatus('lost');
       },
       'Sí, me rindo',
       'Seguir jugando'
@@ -150,7 +163,7 @@ export default function ConnectionsScreen() {
             <ActivityIndicator size="large" color="#E91E63" />
           </View>
         ) : (
-          <View style={[styles.boardWrapper, styles.boardWrapperFlex]}>
+          <View style={styles.boardWrapper}>
 
             {/* BLOQUE DE CATEGORÍAS RESUELTAS */}
             <View style={styles.solvedContainer}>
@@ -166,36 +179,51 @@ export default function ConnectionsScreen() {
                 //Extraemos las imágenes para enviárselas al componente
                 const pilotImages = categoryPilots.map(p => p.imageUrl);
 
+                const isRevealed = revealedByGiveUp.includes(category);
+                const finalBoxColor = isRevealed ? '#E10600' : (info?.color || '#555');
+
                 return (
                   <SolvedCategory
                     key={category}
                     title={category}
                     pilotsText={pilotsText}
-                    color={info?.color || '#555'}
+                    isRevealed={isRevealed}
                     pilotImages={pilotImages}
                   />
                 );
               })}
             </View>
 
-            {/* GRID DE PILOTOS RESTANTES */}
-            <View style={styles.gridContainer}>
-              {gridItems.map((item) => (
-                <PilotCard
-                  key={item.id}
-                  name={item.name}
-                  imageUrl={item.imageUrl}
-                  isSelected={selectedIds.includes(item.id)}
-                  onPress={() => toggleSelection(item.id)}
-                />
-              ))}
-            </View>
+            {gameStatus === 'playing' && (
+              <View style={styles.gridContainer}>
+                {gridItems.map((item) => (
+                  <PilotCard
+                    key={item.id}
+                    name={item.name}
+                    imageUrl={item.imageUrl}
+                    isSelected={selectedIds.includes(item.id)}
+                    onPress={() => toggleSelection(item.id)}
+                  />
+                ))}
+              </View>
+            )}
 
           </View>
         )}
 
-        {/* CONTROLES INFERIORES */}
-        {!isLoading && (
+        {!isLoading && gameStatus !== 'playing' && (
+          <View style={styles.resultContainer}>
+            <Text style={[
+              styles.resultPrimaryText, 
+              gameStatus === 'won' ? styles.textWon : styles.textLost
+            ]}>
+              {gameStatus === 'won' ? '¡Enhorabuena, has completado las conexiones!' : 'Has perdido. Suerte la próxima vez.'}
+            </Text>
+          </View>
+        )}
+
+        {/* CAMBIO 9: Condicionamos los botones para que desaparezcan si gameStatus ya no es 'playing' */}
+        {!isLoading && gameStatus === 'playing' && (
           <View style={styles.controlsWrapper}>
             <GameControls
               onSubmit={handleSubmit}
@@ -206,7 +234,6 @@ export default function ConnectionsScreen() {
         )}
       </ScrollView>
     </View>
-
   );
 }
 
@@ -265,6 +292,22 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 8,
+  },
+  resultContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  resultPrimaryText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  textWon: {
+    color: '#538d4e', 
+  },
+  textLost: {
+    color: '#E10600', 
   },
   controlsWrapper: {
     marginTop: 40,
