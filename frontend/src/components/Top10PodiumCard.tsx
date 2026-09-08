@@ -7,15 +7,22 @@ interface PodiumCardProps {
   country: string;
   name?: string;
   imageUrl?: string;
-  isRevealed: boolean;
   isFirst?: boolean;
+  isGuessed?: boolean;
+  isGivenUp?: boolean;
 }
 
-export default function Top10PodiumCard({ position, country, name, imageUrl, isRevealed, isFirst }: PodiumCardProps) {
+export default function Top10PodiumCard({ position, country, name, imageUrl, isFirst, isGuessed, isGivenUp }: PodiumCardProps) {
   const cleanCountry = country ? country.toUpperCase().trim() : '';
+  const isRevealed = isGuessed || isGivenUp;
 
   return (
-    <View style={[styles.card, isFirst && styles.firstPlaceCard]}>
+    <View style={[
+      styles.card, 
+      isFirst && styles.firstPlaceCard,
+      isGuessed && styles.cardGuessed,
+      isGivenUp && styles.cardGivenUp
+    ]}>
       <View style={styles.header}>
         <Text style={styles.positionText}>{position}</Text>
         <Image source={getFlag(cleanCountry)} style={styles.flagIcon} resizeMode="contain" />
@@ -48,6 +55,12 @@ const styles = StyleSheet.create({
     borderColor: '#444',
     overflow: 'hidden',
   },
+  cardGuessed: {
+    backgroundColor: '#538d4e',
+  },
+  cardGivenUp: {
+    backgroundColor: '#E10600',
+  },
   firstPlaceCard: {
     height: 160,
     marginTop: -20,
@@ -72,7 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  nameText: { color: '#FFF', fontSize: 12, fontWeight: 'bold', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 4, width: '100%' },
+  nameText: { color: '#FFF', fontSize: 12, fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 4, width: '100%' },
   hiddenContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   questionMark: { color: '#555', fontSize: 40, fontWeight: 'bold' },
 });

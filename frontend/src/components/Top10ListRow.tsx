@@ -6,14 +6,20 @@ interface ListRowProps {
   position: number;
   country: string;
   name?: string;
-  isRevealed: boolean;
+  isGuessed?: boolean;
+  isGivenUp?: boolean;
 }
 
-export default function Top10ListRow({ position, country, name, isRevealed }: ListRowProps) {
+export default function Top10ListRow({ position, country, name, isGivenUp, isGuessed }: ListRowProps) {
   const cleanCountry = country ? country.toUpperCase().trim() : '';
+  const isRevealed = isGuessed || isGivenUp;
   
   return (
-    <View style={styles.row}>
+    <View style={[
+      styles.row,
+      isGuessed && styles.rowGuessed,
+      isGivenUp && styles.rowGivenUp
+    ]}>
       <View style={styles.leftSide}>
         <Text style={styles.positionText}>{position}</Text>
         <Image source={getFlag(cleanCountry)} style={styles.flagIcon} resizeMode="contain" />
@@ -41,6 +47,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333',
     alignItems: 'center',
+  },
+  rowGuessed: {
+    backgroundColor: '#538d4e',
+    borderColor: '#538d4e',
+  },
+  rowGivenUp: {
+    backgroundColor: '#E10600',
+    borderColor: '#E10600',
   },
   leftSide: { flexDirection: 'row', alignItems: 'center', width: 75, gap: 10 },
   positionText: { color: '#FFF', fontSize: 16, fontWeight: 'bold', width: 28 },

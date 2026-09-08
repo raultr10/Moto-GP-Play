@@ -8,15 +8,19 @@ import { useFeedback } from '../context/FeedbackContext';
 // Función para ignorar tildes y mayúsculas en las búsquedas, igual que en el Grid
 const normalizeText = (text: string) => {
   return text
-    .normalize("NFD") 
-    .replace(/[\u0300-\u036f]/g, "") 
-    .toLowerCase(); 
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 };
 
 export default function Top10Screen() {
   const { showError, showInfo, showConfirm } = useFeedback();
   const [raceData, setRaceData] = useState<any>(null);
-  const [revealedIds, setRevealedIds] = useState<string[]>([]);
+
+  const [guessedIds, setGuessedIds] = useState<string[]>([]);
+  const [givenUpIds, setGivenUpIds] = useState<string[]>([]);
+  const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
+
   const [isLoading, setIsLoading] = useState(true);
 
   const [inputText, setInputText] = useState('');
@@ -40,7 +44,9 @@ export default function Top10Screen() {
 
   const fetchNewGame = async () => {
     setIsLoading(true);
-    setRevealedIds([]);
+    setGameStatus('playing');
+    setGuessedIds([]);
+    setGivenUpIds([]);
     setInputText('');
     setSuggestions([]);
 
@@ -78,11 +84,18 @@ export default function Top10Screen() {
   const handleSelectRider = (rider: any) => {
     if (!raceData) return;
 
+    const riderIdStr = rider.id.toString();
     const isValidGuess = raceData.results.some((r: any) => r.id === rider.id.toString());
 
     if (isValidGuess) {
-      if (!revealedIds.includes(rider.id.toString())) {
-        setRevealedIds([...revealedIds, rider.id.toString()]);
+      if (!guessedIds.includes(riderIdStr)) {
+        const newGuessedIds = [...guessedIds, riderIdStr];
+        setGuessedIds(newGuessedIds);
+
+        //Comprobamos si con este acierto ya hemos adivinado los 10
+        if (newGuessedIds.length === raceData.results.length) {
+          setGameStatus('won');
+        }
       } else {
         showInfo('Aviso', '¡Ya has adivinado a este piloto!');
       }
@@ -96,15 +109,18 @@ export default function Top10Screen() {
 
   const handleGiveUp = () => {
     if (!raceData) return;
-    
+
     showConfirm(
       '¿Te rindes?',
       'Se desvelará todo el Top 10 de esta carrera. ¿Estás seguro de que quieres abandonar?',
       () => {
-        const allIds = raceData.results.map((r: any) => r.id);
-        setRevealedIds(allIds);
+        const allIds = raceData.results.map((r: any) => r.id.toString());
+        const unsolvedIds = allIds.filter((id: string) => !guessedIds.includes(id));
+
+        setGivenUpIds(unsolvedIds);
         setInputText('');
         setSuggestions([]);
+        setGameStatus('lost');
       },
       'Sí, me rindo',
       'Seguir jugando'
@@ -124,8 +140,8 @@ export default function Top10Screen() {
   const isListOpen = suggestions.length > 0;
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <CustomHeader />
@@ -147,64 +163,95 @@ export default function Top10Screen() {
         </View>
 
         <View style={styles.podiumContainer}>
-          <Top10PodiumCard {...pos2} isRevealed={revealedIds.includes(pos2.id)} />
-          <Top10PodiumCard {...pos1} isRevealed={revealedIds.includes(pos1.id)} isFirst />
-          <Top10PodiumCard {...pos3} isRevealed={revealedIds.includes(pos3.id)} />
+          {/* CAMBIO 5: Pasamos isGuessed e isGivenUp a las tarjetas del podio */}
+          <Top10PodiumCard
+            {...pos2}
+            isGuessed={guessedIds.includes(pos2.id.toString())}
+            isGivenUp={givenUpIds.includes(pos2.id.toString())}
+          />
+          <Top10PodiumCard
+            {...pos1}
+            isGuessed={guessedIds.includes(pos1.id.toString())}
+            isGivenUp={givenUpIds.includes(pos1.id.toString())}
+            isFirst
+          />
+          <Top10PodiumCard
+            {...pos3}
+            isGuessed={guessedIds.includes(pos3.id.toString())}
+            isGivenUp={givenUpIds.includes(pos3.id.toString())}
+          />
         </View>
 
         <View style={styles.listContainer}>
           {restOfList.map((rider: any) => (
+            //Pasamos isGuessed e isGivenUp a las filas de la lista
             <Top10ListRow
               key={rider.position}
               {...rider}
-              isRevealed={revealedIds.includes(rider.id)}
+              isGuessed={guessedIds.includes(rider.id.toString())}
+              isGivenUp={givenUpIds.includes(rider.id.toString())}
             />
           ))}
         </View>
 
-        {/* NUEVO DISEÑO DEL BUSCADOR (importado de GridScreen) */}
-        <View style={styles.searchSectionWrapper}>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={[
-                styles.input, 
-                isListOpen && styles.inputWithSuggestions 
-              ]}
-              placeholder="Busca un piloto..."
-              placeholderTextColor="#888"
-              value={inputText}
-              onChangeText={handleSearch}
-              selectionColor="#E10600"
-            />
-
-            {isListOpen && (
-              <View style={styles.suggestionsList}>
-                <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
-                  {suggestions.map((rider) => (
-                    <TouchableOpacity
-                      key={rider.id}
-                      style={styles.suggestionItem}
-                      onPress={() => handleSelectRider(rider)}
-                    >
-                      <Text style={styles.suggestionText}>{rider.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+        {gameStatus !== 'playing' && (
+          <View style={styles.resultContainer}>
+            <Text style={[
+              styles.resultPrimaryText,
+              gameStatus === 'won' ? styles.textWon : styles.textLost
+            ]}>
+              {gameStatus === 'won' ? '¡Enhorabuena, has completado el Top 10!' : 'Has perdido. Suerte la próxima vez.'}
+            </Text>
           </View>
-        </View>
+        )}
 
-        <View style={styles.controlsContainer}>
-          <TouchableOpacity style={styles.giveUpBtn} onPress={handleGiveUp}>
-            <Text style={styles.giveUpText}>Give up</Text>
-          </TouchableOpacity>
-        </View>
+        {gameStatus === 'playing' && (
+          <>
+            <View style={styles.searchSectionWrapper}>
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    isListOpen && styles.inputWithSuggestions
+                  ]}
+                  placeholder="Busca un piloto..."
+                  placeholderTextColor="#888"
+                  value={inputText}
+                  onChangeText={handleSearch}
+                  selectionColor="#E10600"
+                />
+
+                {isListOpen && (
+                  <View style={styles.suggestionsList}>
+                    <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
+                      {suggestions.map((rider) => (
+                        <TouchableOpacity
+                          key={rider.id}
+                          style={styles.suggestionItem}
+                          onPress={() => handleSelectRider(rider)}
+                        >
+                          <Text style={styles.suggestionText}>{rider.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.controlsContainer}>
+              <TouchableOpacity style={styles.giveUpBtn} onPress={handleGiveUp}>
+                <Text style={styles.giveUpText}>Give up</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#15151A' },
@@ -229,6 +276,22 @@ const styles = StyleSheet.create({
   podiumContainer: { flexDirection: 'row', width: '100%', maxWidth: 400, alignItems: 'flex-end', marginBottom: 20, paddingHorizontal: 10 },
   listContainer: { width: '100%', maxWidth: 400, marginBottom: 10 },
 
+  resultContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  resultPrimaryText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  textWon: {
+    color: '#538d4e', // Verde
+  },
+  textLost: {
+    color: '#E10600', // Rojo
+  },
   // ESTILOS NUEVOS DEL BUSCADOR
   searchSectionWrapper: {
     marginTop: 20,
@@ -257,18 +320,18 @@ const styles = StyleSheet.create({
   inputWithSuggestions: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
-    borderBottomWidth: 0, 
+    borderBottomWidth: 0,
   },
   suggestionsList: {
     backgroundColor: '#1E1E26',
     borderWidth: 1,
-    borderColor: '#FFF', 
+    borderColor: '#FFF',
     borderTopWidth: 0,
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
     position: 'absolute',
-    top: 50, 
-    left: 0, 
+    top: 50,
+    left: 0,
     right: 0,
     paddingTop: 10,
     paddingBottom: 15,
@@ -277,7 +340,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 8,
     elevation: 6,
-    zIndex: 1, 
+    zIndex: 1,
   },
   suggestionItem: {
     paddingVertical: 12,
