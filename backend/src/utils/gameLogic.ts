@@ -11,12 +11,12 @@ export const checkMatch = (rider: any, category: string, teamNames: string[]) =>
   if (cat === 'GANADOR CARRERA' && rider.isRaceWinner) return true;
 
   if (cat === 'COMPAÑEROS DE MÁRQUEZ') {
-    const teammates = ['Dani Pedrosa', 'Jorge Lorenzo', 'Pol Espargaró', 'Joan Mir', 'Alex Márquez'];
+    const teammates = ['Dani Pedrosa', 'Jorge Lorenzo', 'Pol Espargaró', 'Joan Mir', 'Alex Márquez', 'Francesco Bagnaia'];
     return teammates.includes(rider.name);
   }
 
   if (cat === 'COMPAÑEROS DE ROSSI') {
-    const teammates = ['Colin Edwards', 'Jorge Lorenzo', 'Maverick Viñales', 'Nicky Hayden', 'Luca Marini'];
+    const teammates = ['Colin Edwards', 'Jorge Lorenzo', 'Maverick Viñales', 'Nicky Hayden', 'Franco Morbidelli'];
     return teammates.includes(rider.name);
   }
 
