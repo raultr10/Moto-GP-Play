@@ -1,12 +1,52 @@
 import { Hono } from 'hono';
 import { db } from '../db/db';
-import { circuitResults, circuits, riders } from '../db/schema';
+import { circuitResults, circuits, riders, top10Categories, top10Entries } from '../db/schema';
 import { eq, lte } from 'drizzle-orm';
 
 const top10Route = new Hono();
 
 top10Route.get('/random', async (c) => {
   try {
+    const categories = await db.select().from(top10Categories);
+
+    const isCustomTrivia = categories.length > 0 && Math.random() > 0.5;
+
+    if (isCustomTrivia) {
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+
+      //Extraemos los pilotos de esa categoría
+      const entries = await db
+        .select({
+          position: top10Entries.position,
+          statValue: top10Entries.statValue,
+          riderId: riders.id,
+          riderName: riders.name,
+          country: riders.country,
+          imageUrl: riders.imageUrl,
+        })
+        .from(top10Entries)
+        .innerJoin(riders, eq(top10Entries.riderId, riders.id))
+        .where(eq(top10Entries.categoryId, randomCategory!.id));
+
+      //Disfrazamos los datos para que el frontend crea que es una carrera normal
+      const customRaceData = {
+        circuitName: randomCategory!.title,
+        year: randomCategory!.badgeText || '',
+        results: entries.map(e => ({
+          position: e.position,
+          id: e.riderId.toString(),
+          name: e.riderName,
+          country: e.country,
+          imageUrl: e.imageUrl,
+          statValue: e.statValue
+        })).sort((a, b) => a.position - b.position)
+      };
+
+      //Solo lo enviamos si la lista manual de PgAdmin tiene los 10 pilotos completos
+      if (customRaceData.results.length === 10) {
+        return c.json(customRaceData);
+      }
+    }
     //Extraemos de la BD todos los resultados que sean posición 10 o superior
     const allTop10Results = await db
       .select({

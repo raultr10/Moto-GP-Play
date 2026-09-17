@@ -82,3 +82,23 @@ export const riderTeams = pgTable("rider_teams", {
 }, (t) => ({
   pk: primaryKey({ columns: [t.riderId, t.teamId] }) 
 }));
+
+// ==========================================
+// TABLA DE CATEGORÍAS TOP 10
+// ==========================================
+export const top10Categories = pgTable("top10_categories", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(), 
+  badgeText: varchar("badge_text", { length: 100 }),  
+});
+
+// ==========================================
+// TABLA DE ENTRADAS DEL TOP 10
+// ==========================================
+export const top10Entries = pgTable("top10_entries", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").references(() => top10Categories.id, { onDelete: 'cascade' }),
+  riderId: integer("rider_id").references(() => riders.id, { onDelete: 'cascade' }),
+  position: integer("position").notNull(),            
+  statValue: varchar("stat_value", { length: 50 })    
+});

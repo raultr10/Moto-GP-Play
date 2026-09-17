@@ -10,9 +10,10 @@ interface PodiumCardProps {
   isFirst?: boolean;
   isGuessed?: boolean;
   isGivenUp?: boolean;
+  statValue?: string;
 }
 
-export default function Top10PodiumCard({ position, country, name, imageUrl, isFirst, isGuessed, isGivenUp }: PodiumCardProps) {
+export default function Top10PodiumCard({ position, country, name, imageUrl, isFirst, isGuessed, isGivenUp, statValue }: PodiumCardProps) {
   const cleanCountry = country ? country.toUpperCase().trim() : '';
   const isRevealed = isGuessed || isGivenUp;
 
@@ -33,6 +34,7 @@ export default function Top10PodiumCard({ position, country, name, imageUrl, isF
           {imageUrl && <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />}
           <View style={styles.nameContainer}>
             <Text style={styles.nameText} numberOfLines={2}>{name}</Text>
+            {statValue ? <Text style={styles.statText}>{statValue}</Text> : null}
           </View>
         </View>
       ) : (
@@ -86,6 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   nameText: { color: '#FFF', fontSize: 12, fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 4, width: '100%' },
+  statText: { color: '#4DD0E1', fontSize: 10, fontWeight: 'bold', textAlign: 'center', marginTop: 1 },
   hiddenContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   questionMark: { color: '#555', fontSize: 40, fontWeight: 'bold' },
 });

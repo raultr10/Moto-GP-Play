@@ -8,12 +8,13 @@ interface ListRowProps {
   name?: string;
   isGuessed?: boolean;
   isGivenUp?: boolean;
+  statValue?: string;
 }
 
-export default function Top10ListRow({ position, country, name, isGivenUp, isGuessed }: ListRowProps) {
+export default function Top10ListRow({ position, country, name, isGivenUp, isGuessed, statValue }: ListRowProps) {
   const cleanCountry = country ? country.toUpperCase().trim() : '';
   const isRevealed = isGuessed || isGivenUp;
-  
+
   return (
     <View style={[
       styles.row,
@@ -24,10 +25,13 @@ export default function Top10ListRow({ position, country, name, isGivenUp, isGue
         <Text style={styles.positionText}>{position}</Text>
         <Image source={getFlag(cleanCountry)} style={styles.flagIcon} resizeMode="contain" />
       </View>
-      
+
       <View style={styles.rightSide}>
         {isRevealed ? (
-          <Text style={styles.nameText}>{name}</Text>
+          <View style={styles.nameAndStatContainer}>
+            <Text style={styles.nameText}>{name}</Text>
+            {statValue ? <Text style={styles.statText}>{statValue}</Text> : null}
+          </View>
         ) : (
           <View style={styles.hiddenLine} />
         )}
@@ -58,8 +62,15 @@ const styles = StyleSheet.create({
   },
   leftSide: { flexDirection: 'row', alignItems: 'center', width: 75, gap: 10 },
   positionText: { color: '#FFF', fontSize: 16, fontWeight: 'bold', width: 28 },
-  flagIcon: { width: 26, height: 18, borderRadius: 2 }, 
+  flagIcon: { width: 26, height: 18, borderRadius: 2 },
   rightSide: { flex: 1, marginLeft: 10 },
+  nameAndStatContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingRight: 5 
+  },
   nameText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  statText: { color: '#4DD0E1', fontSize: 14, fontWeight: 'bold' },
   hiddenLine: { height: 12, backgroundColor: '#333', borderRadius: 6, width: '80%' },
 });
